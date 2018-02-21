@@ -41,17 +41,21 @@ namespace BlackmothMod
             PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
         }
 
-        public override string GetVersion() => "1.2.0";
+        public override string GetVersion() => "1.3.0";
 
         private GameObject DashSoul(GameObject go, HutongGames.PlayMaker.Fsm fsm)
         {
             PlayMakerFSM hm = FSMUtility.LocateFSM(fsm.GameObject, "health_manager");
-            PlayMakerFSM hme = FSMUtility.LocateFSM(fsm.GameObject, "health_manager_enemy");
-
-            if (go == sharpShadow && (hm || hme))
+            if (object.Equals(hm, null))
             {
-                FSMUtility.SetInt(hm, "HP", FSMUtility.GetInt(hm, "HP") - dashDamage);
-                FSMUtility.SetInt(hme, "HP", FSMUtility.GetInt(hme, "HP") - dashDamage);
+                hm = FSMUtility.LocateFSM(fsm.GameObject, "health_manager_enemy");
+            }
+            if (Equals(hm, null))
+                return go;
+            else
+            if (go == sharpShadow)
+            {
+                hm.FsmVariables.GetFsmInt("HP").Value -= dashDamage-1;
                 HeroController.instance.AddMPChargeSpa(11);
             }
             return go;
@@ -90,6 +94,14 @@ namespace BlackmothMod
                     this.dashDamage
                 }));
                 oldDashDamage = dashDamage;
+            }
+            try
+            {
+                FSMUtility.LocateFSM(sharpShadow, "damages_enemy").FsmVariables.GetFsmInt("damageDealt").Value = 1;
+            }
+            catch
+            {
+                Blackmoth.Instance.LogWarn("[Blackmoth] Sharp Shadow object not set!");
             }
             PlayerData.instance.nailDamage = 1;
             PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
