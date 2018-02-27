@@ -23,10 +23,13 @@ FEATURES
  1 - Open the containing folder for the game (either right-click it on
  Steam and then Properties->Local Files-> Browse Local Files or simply go to
  <installation driver>:\Program Files (x86)\Steam\steamapps\common\Hollow Knight);
+ 
  2 - Copy and paste the \hollow_knight_data\ folder contained in the zip, inside the above-mentioned folder;
- 5 - To avoid any possible unwanted interactions, only try this mod on a New Game - loading existing save data
+ 
+ 3 - To avoid any possible unwanted interactions, only try this mod on a New Game - loading existing save data
  may cause corruption or other issues;
- 6 - ???
+ 
+ 4-6 - ???
  7 - Enjoy!!!
  
  
