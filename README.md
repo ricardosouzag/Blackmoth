@@ -45,7 +45,7 @@ FEATURES
  
   This mod was made by Gradow ([Gradow#9473] on Discord). The API this mod uses as a base to work was made by Seanpr and Firzen.
   The initial port of this mod to the API, as well as the 8-directional dash, was done originally by Seanpr and then expanded upon
-  by me. Credit also goes to all the amazing folks at the Hollow Knigh#modding subchannel on Discord.
+  by me. Credit also goes to all the amazing folks at the Hollow Knight#modding subchannel on Discord.
   
   
   Special thanks to:
