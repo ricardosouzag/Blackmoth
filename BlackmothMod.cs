@@ -58,14 +58,9 @@ namespace BlackmothMod
             if (HeroController.instance.cState.onGround && dashCount > 1) dashCount = 0;
 
             GetSuperdashDirection();
-
-            if (GameManager.instance.inputHandler.inputActions.right.IsPressed && HeroController.instance.cState.onGround && !HeroController.instance.cState.facingRight)
+            if (superDash.ActiveStateName == "Regain Control")
             {
-                HeroController.instance.cState.facingRight = true;
-            }
-            else if (GameManager.instance.inputHandler.inputActions.left.IsPressed && HeroController.instance.cState.onGround && HeroController.instance.cState.facingRight)
-            {
-                HeroController.instance.cState.facingRight = false;
+                HeroController.instance.cState.invulnerable = false;
             }
         }
 
@@ -73,6 +68,7 @@ namespace BlackmothMod
         {
             if (HeroController.instance.cState.superDashing && PlayerData.instance.defeatedNightmareGrimm)
             {
+                HeroController.instance.cState.invulnerable = true;
                 if (GameManager.instance.inputHandler.inputActions.right.IsPressed && !HeroController.instance.cState.facingRight)
                 {
                     HeroController.instance.gameObject.transform.Rotate(new Vector3(0, 1, 0), 180f);
