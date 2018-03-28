@@ -499,9 +499,18 @@ Allows bearer to ascend and become the legendary Grubbermoth and fly away to the
                         break;
 
                     case "INV_DESC_SUPERDASH":
-                        ret = $@"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+                        if (PlayerData.instance.defeatedNightmareGrimm)
+                        {
+                            ret = $@"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+
+With the Nightmare defeated, the crystal has revealed its true potential, granting its wielder more flexibility.";
+                        }
+                        else
+                        {
+                            ret = $@"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
 
 Even though it's quite powerful, it seems as if a Nightmare is preventing it from unleashing its true potential...";
+                        }
                         break;
 
                     case "INV_NAME_SHADOWDASH":
