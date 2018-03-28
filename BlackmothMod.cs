@@ -418,11 +418,22 @@ namespace BlackmothMod
 
         private GameObject DashSoul(GameObject go, Fsm fsm)
         {
-            if (fsm.GameObject.GetComponent<HealthManager>() != null)
+            if (go == sharpShadow)
             {
-                HeroController.instance.AddMPChargeSpa(11);
+                if (fsm.GameObject.GetComponent<HealthManager>() != null)
+                {
+                    HeroController.instance.AddMPChargeSpa(11);
+                }
+                else
+                {
+                    PlayMakerFSM hm = FSMUtility.LocateFSM(fsm.GameObject, "health_manager") ?? FSMUtility.LocateFSM(fsm.GameObject, "health_manager_enemy");
+                    if (!Equals(hm, null))
+                    {
+                        HeroController.instance.AddMPChargeSpa(11);
+                    }
+                }
             }
-            return go;
+                return go;
         }
 
         string Descriptions(string key, string sheet)
