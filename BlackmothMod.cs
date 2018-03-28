@@ -13,7 +13,7 @@ namespace BlackmothMod
     {
         public static Blackmoth Instance;
 
-        public override string GetVersion() => "1.5.1";
+        public override string GetVersion() => "1.6.0";
 
         public override void Initialize()
         {
@@ -22,10 +22,12 @@ namespace BlackmothMod
             Instance.Log("Blackmoth initializing!");
 
             ModHooks.Instance.HeroUpdateHook += Update;
-            ModHooks.Instance.HeroUpdateHook += GetSharpShadow;
+            ModHooks.Instance.HeroUpdateHook += GetReferences;
             ModHooks.Instance.DashVectorHook += CalculateDashVelocity;
             ModHooks.Instance.DashPressedHook += CheckForDash;
             ModHooks.Instance.OnGetEventSenderHook += DashSoul;
+            ModHooks.Instance.LanguageGetHook += Descriptions;
+            //ModHooks.Instance.SceneChanged += DashSoul;
 
 
             Instance.Log("Blackmoth initialized!");
@@ -34,7 +36,7 @@ namespace BlackmothMod
         public void Unload()
         {
             ModHooks.Instance.HeroUpdateHook -= Update;
-            ModHooks.Instance.HeroUpdateHook -= GetSharpShadow;
+            ModHooks.Instance.HeroUpdateHook -= GetReferences;
             ModHooks.Instance.DashVectorHook -= CalculateDashVelocity;
             ModHooks.Instance.DashPressedHook -= CheckForDash;
             ModHooks.Instance.OnGetEventSenderHook -= DashSoul;
@@ -58,17 +60,12 @@ namespace BlackmothMod
             if (HeroController.instance.cState.onGround && dashCount > 1) dashCount = 0;
 
             GetSuperdashDirection();
-            if (superDash.ActiveStateName == "Regain Control")
-            {
-                HeroController.instance.cState.invulnerable = false;
-            }
         }
 
         private void GetSuperdashDirection()
         {
             if (HeroController.instance.cState.superDashing && PlayerData.instance.defeatedNightmareGrimm)
             {
-                HeroController.instance.cState.invulnerable = true;
                 if (GameManager.instance.inputHandler.inputActions.right.IsPressed && !HeroController.instance.cState.facingRight)
                 {
                     HeroController.instance.gameObject.transform.Rotate(new Vector3(0, 1, 0), 180f);
@@ -89,11 +86,11 @@ namespace BlackmothMod
             dashDamage = 5 + PlayerData.instance.nailSmithUpgrades * 4;
             if (PlayerData.instance.equippedCharm_16)
             {
-                this.dashDamage *= 2;
+                dashDamage *= 2;
             }
             if (PlayerData.instance.equippedCharm_25)
             {
-                dashDamage = (int)(dashDamage * 1.5);
+                dashDamage = (int)((double)dashDamage * 1.5);
             }
             if (oldDashDamage != dashDamage)
             {
@@ -102,7 +99,9 @@ namespace BlackmothMod
             }
             try
             {
-                FSMUtility.LocateFSM(sharpShadow, "damages_enemy").FsmVariables.GetFsmInt("damageDealt").Value = dashDamage;
+                sharpShadowFSM.FsmVariables.GetFsmInt("damageDealt").Value = dashDamage;
+                //sharpShadowFSM.FsmVariables.GetFsmInt("attackType").Value = 0;
+                if (PlayerData.instance.defeatedNightmareGrimm) superDash.FsmVariables.GetFsmInt("DamageDealt").Value = dashDamage;
             }
             catch
             {
@@ -120,7 +119,7 @@ namespace BlackmothMod
             }
         }
 
-        public void GetSharpShadow()
+        public void GetReferences()
         {
             if (sharpShadow == null || sharpShadow.tag != "Sharp Shadow")
                 foreach (GameObject gameObject in Resources.FindObjectsOfTypeAll<GameObject>())
@@ -128,7 +127,8 @@ namespace BlackmothMod
                     if (gameObject != null && gameObject.tag == "Sharp Shadow")
                     {
                         sharpShadow = gameObject;
-                        break;
+                        sharpShadowFSM = FSMUtility.LocateFSM(sharpShadow, "damages_enemy");
+                        LogDebug($@"Found Sharp Shadow: {sharpShadow} - {sharpShadowFSM}.");
                     }
                 }
 
@@ -334,7 +334,6 @@ namespace BlackmothMod
                 || HeroController.instance.cState.wallSliding))
                 || PlayerData.instance.equippedCharm_35)
             {
-                Log($"{dashCount}");
                 if ((!HeroController.instance.cState.onGround || DashDirection.y != 0) && !HeroController.instance.inAcid && !HeroController.instance.playerData.equippedCharm_32)
                 {
                     GetPrivateField("airDashed").SetValue(HeroController.instance, true);
@@ -417,16 +416,137 @@ namespace BlackmothMod
         }
 
 
-        private GameObject DashSoul(GameObject go, HutongGames.PlayMaker.Fsm fsm)
+        private GameObject DashSoul(GameObject go, Fsm fsm)
         {
-            PlayMakerFSM hm = FSMUtility.LocateFSM(fsm.GameObject, "health_manager") ?? FSMUtility.LocateFSM(fsm.GameObject, "health_manager_enemy");
-            if (Equals(hm, null)) return go;
-            else if (go == sharpShadow)
+            if (fsm.GameObject.GetComponent<HealthManager>() != null)
             {
                 HeroController.instance.AddMPChargeSpa(11);
             }
-
             return go;
+        }
+
+        string Descriptions(string key, string sheet)
+        {
+            string ret = Language.Language.GetInternal(key, sheet);
+            if (sheet == "UI")
+            {
+                switch(key)
+                {
+                    case "CHARM_DESC_13":
+                        ret = $@"Freely given by the Mantis Tribe to those they respect.
+
+Greatly increases the range of the bearer's dash, allowing them to strike foes from further away.";
+                        break;
+
+                    case "CHARM_DESC_16":
+                        ret = $@"Contains a forbidden spell that transforms shadows into deadly weapons.
+
+When dashing, the bearer's body will sharpen and deal extra damage to enemies.";
+                        break;
+
+                    case "CHARM_DESC_18":
+                        ret = $@"Increases the range of the bearer's dash, allowing them to strike foes from further away.";
+                        break;
+
+                    case "CHARM_DESC_25":
+                        ret = $@"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
+
+This charm is fragile, and will break if its bearer is killed.";
+                        break;
+
+                    case "CHARM_DESC_25_G":
+                        ret = $@"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
+
+This charm is ubreakable.";
+                        break;
+
+                    case "CHARM_DESC_31":
+                        ret = $@"Bears the likeness of an eccentric bug known only as {"The Dashmaster"}.
+
+The bearer will be able to dash more often as well as dash in midair. Perfect for those who want to move around as quickly as possible.";
+                        break;
+
+                    case "CHARM_DESC_32":
+                        ret = $@"Born from imperfect, discarded cloaks that have fused together. The cloaks still long to be worn.
+
+Allows the bearer to slash much more rapidly with their dash.";
+                        break;
+
+                    case "CHARM_DESC_35":
+                        ret = $@"Contains the gratitude of grubs who will move to the next stage of their lives. Imbues weapons with a holy strength.
+
+Allows bearer to ascend and become the legendary Grubbermoth and fly away to the heavens.";
+                        break;
+
+                    case "CHARM_NAME_18":
+                        ret = $@"Longdash";
+                        break;
+
+                    case "CHARM_NAME_32":
+                        ret = $@"Quick Dash";
+                        break;
+
+                    case "CHARM_NAME_35":
+                        ret = $@"Grubbermoth's Elegy";
+                        break;
+
+                    case "INV_DESC_DASH":
+                        ret = $@"Cloak threaded with mothwing strands. Allows the wearer to dash in every direction.";
+                        break;
+
+                    case "INV_DESC_SHADOWDASH":
+                        ret = $@"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain soul while dashing.";
+                        break;
+
+                    case "INV_DESC_SUPERDASH":
+                        ret = $@"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+
+Even though it's quite powerful, it seems as if a Nightmare is preventing it from unleashing its true potential...";
+                        break;
+
+                    case "INV_NAME_SHADOWDASH":
+                        ret = $@"Blackmoth Cloak";
+                        break;
+                }
+            }
+            else if (sheet == "Prompts")
+            {
+                switch(key)
+                {
+                    case "NAILSMITH_UPGRADE_1":
+                        ret = "Pay Geo to strengthen dash?";
+                        break;
+
+                    case "NAILSMITH_UPGRADE_2":
+                        ret = "Give Pale Ore and Geo to strengthen dash?";
+                        break;
+
+                    case "NAILSMITH_UPGRADE_3":
+                        ret = "Give two Pale Ore and Geo to strengthen dash?";
+                        break;
+
+                    case "NAILSMITH_UPGRADE_4":
+                        ret = "Give three Pale Ore and Geo to strengthen dash?";
+                        break;
+
+                    case "GET_SHADOWDASH_2":
+                        ret = "Use the cloak to dash and collect Soul from the Void in your surroundings.";
+                        break;
+
+                    case "GET_SHADOWDASH_1":
+                        ret = "to dash forwards and gain Soul.";
+                        break;
+
+                    case "GET_DASH_2":
+                        ret = "Use the cloak to dash quickly through the air in all directions.";
+                        break;
+
+                    case "GET_DASH_1":
+                        ret = "while holding any direction to dash in that direction.";
+                        break;
+                }
+            }
+            return ret;
         }
 
         private FieldInfo GetPrivateField(string fieldName)
@@ -448,6 +568,8 @@ namespace BlackmothMod
         public Vector2 DashDirection;
         public GameObject sharpShadow;
         public PlayMakerFSM superDash;
+        public PlayMakerFSM sharpShadowFSM;
+        int Multiplier { get; set; } = 1;
         int oldDashDamage { get; set; } = 0;
         int dashDamage { get; set; }
         float timer { get; set; } = 0;
