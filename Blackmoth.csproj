@@ -32,7 +32,7 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\modded_assembly\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\Assembly-CSharp_1.3.0.4_beta2\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="PlayMaker, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

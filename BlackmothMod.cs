@@ -13,7 +13,7 @@ namespace BlackmothMod
     {
         public static Blackmoth Instance;
 
-        public override string GetVersion() => "1.6.0";
+        public override string GetVersion() => "1.6.2";
 
         public override void Initialize()
         {
@@ -27,6 +27,7 @@ namespace BlackmothMod
             ModHooks.Instance.DashPressedHook += CheckForDash;
             ModHooks.Instance.OnGetEventSenderHook += DashSoul;
             ModHooks.Instance.LanguageGetHook += Descriptions;
+            ModHooks.Instance.HitInstanceHook += SetDamages;
             //ModHooks.Instance.SceneChanged += DashSoul;
 
 
@@ -40,6 +41,8 @@ namespace BlackmothMod
             ModHooks.Instance.DashVectorHook -= CalculateDashVelocity;
             ModHooks.Instance.DashPressedHook -= CheckForDash;
             ModHooks.Instance.OnGetEventSenderHook -= DashSoul;
+            ModHooks.Instance.LanguageGetHook -= Descriptions;
+            ModHooks.Instance.HitInstanceHook -= SetDamages;
             PlayerData.instance.nailDamage = 5 + 4 * PlayerData.instance.nailSmithUpgrades;
             PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
 
@@ -53,7 +56,10 @@ namespace BlackmothMod
             {
                 CheckForDash();
             }
-            SetDamages();
+            //SetDamages();
+
+            if (dashInvulTimer != 0)
+                HeroController.instance.cState.invulnerable = true;
 
             if (PlayerData.instance.hasSuperDash && PlayerData.instance.defeatedNightmareGrimm) AirSuperDash();
 
@@ -81,9 +87,41 @@ namespace BlackmothMod
             }
         }
 
-        private void SetDamages()
+        //private void SetDamages()
+        //{
+        //    dashDamage = 5 + PlayerData.instance.nailSmithUpgrades * 4;
+        //    if (PlayerData.instance.equippedCharm_16)
+        //    {
+        //        dashDamage *= 2;
+        //    }
+        //    if (PlayerData.instance.equippedCharm_25)
+        //    {
+        //        dashDamage = (int)((double)dashDamage * 1.5);
+        //    }
+        //    if (oldDashDamage != dashDamage)
+        //    {
+        //        Log($@"[Blackmoth] Sharp Shadow Damage set to {dashDamage}");
+        //        oldDashDamage = dashDamage;
+        //    }
+        //    try
+        //    {
+        //        sharpShadowFSM.FsmVariables.GetFsmInt("damageDealt").Value = dashDamage;
+        //        //sharpShadowFSM.FsmVariables.GetFsmInt("attackType").Value = 0;
+        //        if (PlayerData.instance.defeatedNightmareGrimm) superDash.FsmVariables.GetFsmInt("DamageDealt").Value = dashDamage;
+        //    }
+        //    catch
+        //    {
+        //        Blackmoth.Instance.LogWarn("[Blackmoth] Sharp Shadow object not set!");
+        //    }
+        //    PlayerData.instance.nailDamage = 1;
+        //    PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
+        //}
+
+        private HitInstance SetDamages(Fsm hitter, HitInstance hit)
         {
-            dashDamage = 5 + PlayerData.instance.nailSmithUpgrades * 4;
+            LogDebug($@"Creating HitInstance for {hitter.Owner}");
+            Fsm fsm = hitter;
+            dashDamage = 5 + PlayerData.instance.GetInt("nailSmithUpgrades") * 4;
             if (PlayerData.instance.equippedCharm_16)
             {
                 dashDamage *= 2;
@@ -97,18 +135,23 @@ namespace BlackmothMod
                 Log($@"[Blackmoth] Sharp Shadow Damage set to {dashDamage}");
                 oldDashDamage = dashDamage;
             }
-            try
+            if (sharpShadow != null && hitter.GameObject == sharpShadow)
             {
-                sharpShadowFSM.FsmVariables.GetFsmInt("damageDealt").Value = dashDamage;
-                //sharpShadowFSM.FsmVariables.GetFsmInt("attackType").Value = 0;
-                if (PlayerData.instance.defeatedNightmareGrimm) superDash.FsmVariables.GetFsmInt("DamageDealt").Value = dashDamage;
+                LogDebug($@"Setting damage for {hitter.GameObject.name}");
+                hit.DamageDealt = dashDamage;
+                hit.AttackType = 0;
             }
-            catch
+            else if (hitter.GameObject.name.Contains("Slash"))
             {
-                Blackmoth.Instance.LogWarn("[Blackmoth] Sharp Shadow object not set!");
+                LogDebug($@"Setting damage for {hitter.GameObject.name}");
+                hit.DamageDealt = 1;
             }
-            PlayerData.instance.nailDamage = 1;
-            PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
+            else if (hitter.GameObject.name == superDash.gameObject.name && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
+            {
+                LogDebug($@"Setting damage for {hitter.GameObject.name}");
+                hit.DamageDealt = dashDamage;
+            }
+            return hit;
         }
 
         private void DashCooldownUpdate()
@@ -116,6 +159,10 @@ namespace BlackmothMod
             if (dashCooldown != 0)
             {
                 dashCooldown -= Time.deltaTime;
+            }
+            if (dashInvulTimer != 0)
+            {
+                dashInvulTimer -= Time.deltaTime;
             }
         }
 
@@ -182,6 +229,7 @@ namespace BlackmothMod
         public Vector2 CalculateDashVelocity()
         {
             float num;
+            Vector2 ret;
             if (!PlayerData.instance.hasDash)
             {
                 if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
@@ -215,30 +263,32 @@ namespace BlackmothMod
                 {
                     if (HeroController.instance.CheckForBump(CollisionSide.right))
                     {
-                        return new Vector2(num, (float)GetPrivateField("BUMP_VELOCITY_DASH").GetValue(HeroController.instance));
+                        ret = Time.deltaTime * new Vector2(num, (float)GetPrivateField("BUMP_VELOCITY_DASH").GetValue(HeroController.instance));
                     }
                     else
                     {
-                        return new Vector2(num, 0f);
+                        ret = Time.deltaTime * new Vector2(num, 0f);
                     }
                 }
                 else if (HeroController.instance.CheckForBump(CollisionSide.left))
                 {
-                    return new Vector2(-num, (float)GetPrivateField("BUMP_VELOCITY_DASH").GetValue(HeroController.instance));
+                    ret = Time.deltaTime * new Vector2(-num, (float)GetPrivateField("BUMP_VELOCITY_DASH").GetValue(HeroController.instance));
                 }
                 else
                 {
-                    return new Vector2(-num, 0f);
+                    ret = Time.deltaTime * new Vector2(-num, 0f);
                 }
             }
             else if (DashDirection.x == 0)
             {
-                return num * DashDirection;
+                ret = Time.deltaTime * num * DashDirection;
             }
             else
             {
-                return (num / Mathf.Sqrt(2)) * DashDirection;
+                ret =Time.deltaTime * (num / Mathf.Sqrt(2)) * DashDirection;
             }
+            HeroController.instance.GetComponent<Rigidbody2D>().position = HeroController.instance.GetComponent<Rigidbody2D>().position + ret;
+            return Vector2.zero;
         }
 
 
@@ -412,6 +462,7 @@ namespace BlackmothMod
                     GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.backDashPrefab.Spawn(HeroController.instance.transform.position));
                     ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(HeroController.instance.transform.localScale.x * -1f, HeroController.instance.transform.localScale.y, HeroController.instance.transform.localScale.z);
                 }
+                dashInvulTimer = 1f;
             }
         }
 
@@ -596,6 +647,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         float dashCooldown { get; set; }
         float dashCooldownStart { get; set; }
         float dashCooldownHasDash { get; set; }
+        float dashInvulTimer { get; set; } = 0f;
         int dashCount { get; set; } = 0;
     }
 }
