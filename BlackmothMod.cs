@@ -666,7 +666,7 @@ Allows bearer to ascend and become the legendary Grubbermoth and fly away to the
                         break;
 
                     case "INV_DESC_SHADOWDASH":
-                        ret = $@"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain soul while dashing.";
+                        ret = $@"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain soul while dashing and dash through walls.";
                         break;
 
                     case "INV_DESC_SUPERDASH":
@@ -710,11 +710,11 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
                         break;
 
                     case "GET_SHADOWDASH_2":
-                        ret = "Use the cloak to dash and collect Soul from the Void in your surroundings.";
+                        ret = "Use the cloak to dash through the seams in reality and gather soul from the space in-between.";
                         break;
 
                     case "GET_SHADOWDASH_1":
-                        ret = "to dash forwards and gain Soul.";
+                        ret = "to dash through walls and gain Soul.";
                         break;
 
                     case "GET_DASH_2":
