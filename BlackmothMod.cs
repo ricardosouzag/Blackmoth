@@ -5,6 +5,7 @@ using UnityEngine;
 using HutongGames.PlayMaker;
 using System.Collections.Generic;
 using System;
+using UnityEngine.SceneManagement;
 
 namespace BlackmothMod
 {
@@ -25,6 +26,7 @@ namespace BlackmothMod
             ModHooks.Instance.DashVectorHook += CalculateDashVelocity;
             ModHooks.Instance.DashPressedHook += CheckForDash;
             ModHooks.Instance.LanguageGetHook += Descriptions;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += ResetPosition;
 
             EventInfo hi = ModHooks.Instance.GetType().GetEvent("HitInstanceHook", BindingFlags.Instance | BindingFlags.Public);
             isHitInstance = !Equals(hi, null);
@@ -89,11 +91,135 @@ namespace BlackmothMod
                 HeroController.instance.cState.invulnerable = false;
             }
 
-            if (PlayerData.instance.hasSuperDash && PlayerData.instance.defeatedNightmareGrimm) AirSuperDash();
+            //if (PlayerData.instance.hasSuperDash && PlayerData.instance.defeatedNightmareGrimm) AirSuperDash();
 
             if (HeroController.instance.cState.onGround && dashCount > 1) dashCount = 0;
 
-            GetSuperdashDirection();
+            //GetSuperdashDirection();
+
+            //NewSuperDash();
+
+            HeroController.instance.gameObject.transform.position = GrubbersHandling();
+        }
+
+        //void NewSuperDash()
+        //{
+        //    InControl.PlayerAction cdash = GameManager.instance.inputHandler.inputActions.superDash;
+        //    if (superDash.ActiveStateName != "Init")
+        //    {
+        //        superDash.SetState("Init");
+        //    }
+        //    if (cdash.WasPressed)
+        //    {
+        //        foreach (NamedVariable var in superDash.FsmVariables.GetAllNamedVariables())
+        //        {
+        //            Log($@"Superdash has variable {var.Name} ({var.GetType()}) = {var}");
+        //        }
+        //    }
+        //}
+
+        void ResetPosition(Scene scene, LoadSceneMode mode)
+        {
+            grubberOn = false;
+            Log("Resetting Grubber");
+        }
+
+        Vector3 GrubbersHandling()
+        {
+            Vector3 ret = HeroController.instance.gameObject.transform.position;
+            if (PlayerData.instance.equippedCharm_35 && GameManager.instance.inputHandler.inputActions.dash.WasPressed)
+            {
+                grubberOn = !grubberOn;
+                heroPos = HeroController.instance.gameObject.transform.position;
+            }
+            if (PlayerData.instance.equippedCharm_35)
+            {
+                if (grubberOn)
+                {
+                    float num;
+                    Vector3 vector3 = Vector3.zero;
+                    if (!PlayerData.instance.hasDash)
+                    {
+                        if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+                        {
+                            num = HeroController.instance.DASH_SPEED_SHARP;
+                        }
+                        else
+                        {
+                            num = HeroController.instance.DASH_SPEED;
+                        }
+                    }
+                    else if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+                    {
+                        num = HeroController.instance.DASH_SPEED_SHARP * 1.2f;
+                    }
+                    else
+                    {
+                        num = HeroController.instance.DASH_SPEED * 1.2f;
+                    }
+                    if (PlayerData.instance.equippedCharm_18)
+                    {
+                        num *= 1.2f;
+                    }
+                    if (PlayerData.instance.equippedCharm_13)
+                    {
+                        num *= 1.5f;
+                    }
+                    if (GameManager.instance.inputHandler.inputActions.right.IsPressed)
+                    {
+                        vector3 += Vector3.right;
+                        HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
+                        ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, 0.2f);
+                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 5.21f, HeroController.instance.transform.position.y - 0.58f, HeroController.instance.transform.position.z + 0.00101f)));
+                        ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(-1.919591f, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.y, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.z);
+                    }
+                    if (GameManager.instance.inputHandler.inputActions.left.IsPressed)
+                    {
+                        vector3 += Vector3.left;
+                        HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
+                        ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, 0.2f);
+                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x + 5.21f, HeroController.instance.transform.position.y - 0.58f, HeroController.instance.transform.position.z + 0.00101f)));
+                        ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(1.919591f, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.y, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.z);
+                    }
+                    if (GameManager.instance.inputHandler.inputActions.up.IsPressed)
+                    {
+                        vector3 += Vector3.up;
+                        HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
+                        ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, 0.2f);
+                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 0.58f, HeroController.instance.transform.position.y - 5.21f, HeroController.instance.transform.position.z + 0.00101f), new Quaternion(0f, 0f, - 0.7071f, 0.7071f)));
+                        ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(1.919591f, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.y, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.z);
+                    }
+                    if (GameManager.instance.inputHandler.inputActions.down.IsPressed)
+                    {
+                        vector3 += Vector3.down;
+                        HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
+                        ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, 0.2f);
+                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 0.58f, HeroController.instance.transform.position.y + 5.21f, HeroController.instance.transform.position.z + 0.00101f), new Quaternion(0f, 0f, + 0.7071f, 0.7071f)));
+                        ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(1.919591f, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.y, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.z);
+                    }
+                    if (GameManager.instance.inputHandler.inputActions.right.IsPressed)
+                    {
+                        HeroController.instance.FaceRight();
+                    }
+                    else if (GameManager.instance.inputHandler.inputActions.left.IsPressed)
+                    {
+                        HeroController.instance.FaceLeft();
+                    }
+                    HeroController.instance.cState.dashing = true;
+                    GetPrivateField("dashQueueSteps").SetValue(HeroController.instance, 0);
+                    HeroController.instance.dashBurst.transform.localPosition = new Vector3(4.11f, -0.55f, 0.001f);
+                    HeroController.instance.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+                    HeroController.instance.dashingDown = false;
+                    GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, GetPrivateField("dashCooldownTimer").GetValue(HeroController.instance));
+                    HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
+                    HeroController.instance.cState.shadowDashing = true;
+                    ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, sharpShadowVolume);
+                    HeroController.instance.sharpShadowPrefab.SetActive(true);
+                    heroPos += vector3 * num * Time.deltaTime;
+                    ret = heroPos;
+                }                
+            }
+            return ret;
         }
 
         private void GetSuperdashDirection()
@@ -224,6 +350,7 @@ namespace BlackmothMod
             if (superDash == null)
             {
                 superDash = HeroController.instance.superDash;
+                HeroController.instance.gameObject.AddComponent<SuperDashHandler>();
             }
         }
 
@@ -311,7 +438,7 @@ namespace BlackmothMod
                         }
                         else
                         {
-                            ret = Time.deltaTime * new Vector2(num, 0f);
+                            ret = Time.deltaTime * new Vector2(num, 0f);                            
                         }
                     }
                     else if (HeroController.instance.CheckForBump(CollisionSide.left))
@@ -446,9 +573,7 @@ namespace BlackmothMod
                 DashDirection.y = 0;
                 DashDirection.x = HeroController.instance.cState.facingRight ? 1 : -1;
             }
-            if (PlayerData.instance.equippedCharm_35) HeroController.instance.cState.invulnerable = true;
-            DoDash();
-            if (PlayerData.instance.equippedCharm_35) HeroController.instance.cState.invulnerable = false;
+            if (!PlayerData.instance.equippedCharm_35) DoDash();
         }
 
         bool AirDashed()
@@ -490,7 +615,7 @@ namespace BlackmothMod
                 || HeroController.instance.cState.wallSliding))
                 || PlayerData.instance.equippedCharm_35)
             {
-                sharpShadowVolume = PlayerData.instance.equippedCharm_35 ? 0.3f : 1f;
+                sharpShadowVolume = PlayerData.instance.equippedCharm_35 ? 0.1f : 1f;
                 if ((!HeroController.instance.cState.onGround || DashDirection.y != 0) && !HeroController.instance.inAcid && !HeroController.instance.playerData.equippedCharm_32)
                 {
                     GetPrivateField("airDashed").SetValue(HeroController.instance, true);
@@ -527,12 +652,16 @@ namespace BlackmothMod
                 HeroController.instance.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
                 HeroController.instance.dashingDown = false;
 
-                if (HeroController.instance.playerData.hasDash)
-                    dashCooldown = dashCooldownHasDash;
-                else
-                    dashCooldown = dashCooldownStart;
                 if (HeroController.instance.playerData.equippedCharm_32)
                     dashCooldown = 0;
+                else
+                {
+                    if (HeroController.instance.playerData.hasDash)
+                        dashCooldown = dashCooldownHasDash;
+                    else
+                        dashCooldown = dashCooldownStart;
+                }
+
                 GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, GetPrivateField("dashCooldownTimer").GetValue(HeroController.instance));
                 HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
                 HeroController.instance.cState.shadowDashing = true;
@@ -760,5 +889,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         float sharpShadowVolume { get; set; }
         int dashCount { get; set; } = 0;
         bool isHitInstance = false;
+        bool grubberOn = false;
+        Vector3 heroPos { get; set; } = Vector3.zero;
     }
 }

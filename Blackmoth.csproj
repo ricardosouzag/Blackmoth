@@ -33,7 +33,10 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Assembly-CSharp_1.3.0.4_beta2\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\UpdateAPI_1.3.0.8\UpdateAPI_1.3.0.8\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="EnemyRandomizer">
+      <HintPath>..\..\..\..\UpdateAPI_1.3.0.8\UpdateAPI_1.3.0.8\EnemyRandomizer.dll</HintPath>
     </Reference>
     <Reference Include="PlayMaker, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -52,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlackmothMod.cs" />
+    <Compile Include="SuperDash.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
