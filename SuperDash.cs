@@ -69,11 +69,10 @@ namespace BlackmothMod
 
         protected override IEnumerator Init()
         {
-            Dev.Where();
-            
-            hero.RegainControl();
-            hero.SetCState("freezeCharge", false);
             yield return base.Init();
+
+
+
 
             nextState = Inactive;
 
@@ -84,6 +83,8 @@ namespace BlackmothMod
         {
             Dev.Where();
             //dunno, play with these here
+            hero.RegainControl();
+            hero.SetCState("freezeCharge", false);
             while (!wasPressed && !isPressed)
             {
                 yield return new WaitForEndOfFrame();
@@ -138,15 +139,14 @@ namespace BlackmothMod
             hero.SetCState("freezeCharge", true);
             DoCameraEffect("RumblingFocus");
             PlayMakerFSM.BroadcastEvent("FocusRumble");
+            yield return new WaitForSeconds(0.8f);
+            PlayAnimation(SDCharge.GetComponent<tk2dSpriteAnimator>(), "Charge Effect");
+            PlayAnimation("SD Fx Charge");
 
-            if (chargeTimer <= 0)
-            {
-                PlayAnimation(SDCharge.GetComponent<tk2dSpriteAnimator>(), "Charge Effect");
-                PlayAnimation("SD Fx Charge");
+            while (isPressed)
+                yield return new WaitForEndOfFrame();
 
-                if (isNotPressed)
-                    nextState = Init;
-            }
+            nextState = Inactive;
 
             yield break;
         }
