@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
-using nv;
+using ModCommon;
 
 namespace BlackmothMod
 {
