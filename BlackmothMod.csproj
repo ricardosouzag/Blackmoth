@@ -7,9 +7,9 @@
     <ProjectGuid>{F9C69EEA-76DA-431F-87A3-722397AAEC99}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Blackmoth</RootNamespace>
+    <RootNamespace>BlackmothMod</RootNamespace>
     <AssemblyName>Blackmoth</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,14 +30,19 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\UpdateAPI_1.3.0.8\UpdateAPI_1.3.0.8\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\ModdingAPI_1.3.1.5_beta\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="EnemyRandomizer">
-      <HintPath>..\..\..\..\UpdateAPI_1.3.0.8\UpdateAPI_1.3.0.8\EnemyRandomizer.dll</HintPath>
+    <Reference Include="EnemyRandomizer, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\EnemyRandomizer.dll</HintPath>
+    </Reference>
+    <Reference Include="Hooks">
+      <HintPath>..\..\..\..\QoL\Hooks.dll</HintPath>
     </Reference>
     <Reference Include="PlayMaker, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -46,7 +52,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
@@ -55,7 +60,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlackmothMod.cs" />
-    <Compile Include="SuperDash.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
