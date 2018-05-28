@@ -12,7 +12,7 @@ namespace BlackmothMod
     {
         private static Blackmoth Instance;
 
-        public override string GetVersion() => "1.6.8";
+        public override string GetVersion() => "1.6.9";
 
         public override void Initialize()
         {
@@ -35,7 +35,10 @@ namespace BlackmothMod
 
         private void PlayMakerFSM_Awake(On.PlayMakerFSM.orig_Awake orig, PlayMakerFSM self)
         {
-            if (self.name.Contains("Sharp Shadow Impact")) sharpShadowControl = self;
+            if (sharpShadowControl == null)
+            {
+                if (self.name.Contains("Sharp Shadow Impact")) sharpShadowControl = self;
+            }
             orig(self);
         }
 
