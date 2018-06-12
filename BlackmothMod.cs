@@ -5,10 +5,11 @@ using UnityEngine;
 using HutongGames.PlayMaker;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace BlackmothMod
 {
-    public class Blackmoth : Mod, ITogglableMod
+    public class Blackmoth : Mod
     {
         private static Blackmoth Instance;
 
@@ -42,24 +43,10 @@ namespace BlackmothMod
             orig(self);
         }
 
-        public void Unload()
-        {
-            ModHooks.Instance.HeroUpdateHook -= Update;
-            ModHooks.Instance.HeroUpdateHook -= GetReferences;
-            ModHooks.Instance.DashVectorHook -= CalculateDashVelocity;
-            ModHooks.Instance.DashPressedHook -= CheckForDash;
-            ModHooks.Instance.OnGetEventSenderHook -= DashSoul;
-            ModHooks.Instance.LanguageGetHook -= Descriptions;
-            EventInfo hi = ModHooks.Instance.GetType().GetEvent("HitInstanceHook", BindingFlags.Instance | BindingFlags.Public);
-            ModHooks.Instance.HitInstanceHook -= SetDamages;
-
-            Instance.Log("Blackmoth unloaded!");
-        }
-
         private void Update()
         {
             DashCooldownUpdate();
-            if (PlayerData.instance.equippedCharm_35 && GameManager.instance.inputHandler.inputActions.dash.IsPressed)
+            if (PlayerData.instance.GetBool("equippedCharm_35") && GameManager.instance.inputHandler.inputActions.dash.IsPressed)
             {
                 CheckForDash();
             }
@@ -74,7 +61,7 @@ namespace BlackmothMod
                 HeroController.instance.cState.invulnerable = false;
             }
 
-            if (PlayerData.instance.hasSuperDash && PlayerData.instance.defeatedNightmareGrimm) AirSuperDash();
+            if (PlayerData.instance.GetBool("hasSuperDash") && PlayerData.instance.GetBool("defeatedNightmareGrimm")) AirSuperDash();
 
             if (HeroController.instance.cState.onGround && dashCount > 1) dashCount = 0;
 
@@ -88,22 +75,6 @@ namespace BlackmothMod
                 sharpShadowControl.SendEvent("FINISHED");
         }
 
-        void NewSuperDash()
-        {
-            InControl.PlayerAction cdash = GameManager.instance.inputHandler.inputActions.superDash;
-            if (superDash.ActiveStateName != "Init")
-            {
-                superDash.SetState("Init");
-            }
-            if (cdash.WasPressed)
-            {
-                foreach (NamedVariable var in superDash.FsmVariables.GetAllNamedVariables())
-                {
-                    Log($@"Superdash has variable {var.Name} ({var.GetType()}) = {var}");
-                }
-            }
-        }
-
         void ResetPosition(Scene scene, LoadSceneMode mode)
         {
             grubberOn = false;
@@ -113,20 +84,20 @@ namespace BlackmothMod
         Vector3 GrubbersHandling()
         {
             Vector3 ret = HeroController.instance.gameObject.transform.position;
-            if (PlayerData.instance.equippedCharm_35 && GameManager.instance.inputHandler.inputActions.dash.WasPressed)
+            if (PlayerData.instance.GetBool("equippedCharm_35") && GameManager.instance.inputHandler.inputActions.dash.WasPressed)
             {
                 grubberOn = !grubberOn;
                 heroPos = HeroController.instance.gameObject.transform.position;
             }
-            if (PlayerData.instance.equippedCharm_35)
+            if (PlayerData.instance.GetBool("equippedCharm_35"))
             {
                 if (grubberOn)
                 {
                     float num;
                     Vector3 vector3 = Vector3.zero;
-                    if (!PlayerData.instance.hasDash)
+                    if (!PlayerData.instance.GetBool("hasDash"))
                     {
-                        if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+                        if (PlayerData.instance.GetBool("equippedCharm_16") && HeroController.instance.cState.shadowDashing)
                         {
                             num = HeroController.instance.DASH_SPEED_SHARP;
                         }
@@ -135,7 +106,7 @@ namespace BlackmothMod
                             num = HeroController.instance.DASH_SPEED;
                         }
                     }
-                    else if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+                    else if (PlayerData.instance.GetBool("equippedCharm_16") && HeroController.instance.cState.shadowDashing)
                     {
                         num = HeroController.instance.DASH_SPEED_SHARP * 1.2f;
                     }
@@ -143,11 +114,11 @@ namespace BlackmothMod
                     {
                         num = HeroController.instance.DASH_SPEED * 1.2f;
                     }
-                    if (PlayerData.instance.equippedCharm_18)
+                    if (PlayerData.instance.GetBool("equippedCharm_18"))
                     {
                         num *= 1.2f;
                     }
-                    if (PlayerData.instance.equippedCharm_13)
+                    if (PlayerData.instance.GetBool("equippedCharm_13"))
                     {
                         num *= 1.5f;
                     }
@@ -210,7 +181,7 @@ namespace BlackmothMod
 
         private void GetSuperdashDirection()
         {
-            if (HeroController.instance.cState.superDashing && PlayerData.instance.defeatedNightmareGrimm)
+            if (HeroController.instance.cState.superDashing && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
             {
                 if (GameManager.instance.inputHandler.inputActions.right.IsPressed && !HeroController.instance.cState.facingRight)
                 {
@@ -227,51 +198,21 @@ namespace BlackmothMod
             }
         }
 
-        //private void OldSetDamages()
-        //{
-        //    dashDamage = 5 + PlayerData.instance.nailSmithUpgrades * 4;
-        //    if (PlayerData.instance.equippedCharm_16)
-        //    {
-        //        dashDamage *= 2;
-        //    }
-        //    if (PlayerData.instance.equippedCharm_25)
-        //    {
-        //        dashDamage = (int)((double)dashDamage * 1.5);
-        //    }
-        //    if (oldDashDamage != dashDamage)
-        //    {
-        //        Log($@"[Blackmoth] Sharp Shadow Damage set to {dashDamage}");
-        //        oldDashDamage = dashDamage;
-        //    }
-        //    try
-        //    {
-        //        sharpShadowFSM.FsmVariables.GetFsmInt("damageDealt").Value = dashDamage;
-        //        //sharpShadowFSM.FsmVariables.GetFsmInt("attackType").Value = 0;
-        //        if (PlayerData.instance.defeatedNightmareGrimm) superDash.FsmVariables.GetFsmInt("DamageDealt").Value = dashDamage;
-        //    }
-        //    catch
-        //    {
-        //        Blackmoth.Instance.LogWarn("[Blackmoth] Sharp Shadow object not set!");
-        //    }
-        //    PlayerData.instance.nailDamage = 1;
-        //    PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
-        //}
-
         private HitInstance SetDamages(Fsm hitter, HitInstance hit)
         {
             LogDebug($@"Creating HitInstance for {hitter.Owner}");
             Fsm fsm = hitter;
             dashDamage = 5 + PlayerData.instance.GetInt("nailSmithUpgrades") * 4;
             float multiplier = 1;
-            if (PlayerData.instance.hasShadowDash)
+            if (PlayerData.instance.GetBool("hasShadowDash"))
             {
                 multiplier *= 2;
             }
-            if (PlayerData.instance.equippedCharm_25)
+            if (PlayerData.instance.GetBool("equippedCharm_25"))
             {
                 multiplier *= 1.5f;
             }
-            if (PlayerData.instance.equippedCharm_6 && PlayerData.instance.health == 1)
+            if (PlayerData.instance.GetBool("equippedCharm_6") && PlayerData.instance.GetInt("health") == 1)
             {
                 multiplier *= 1.75f;
             }
@@ -287,7 +228,7 @@ namespace BlackmothMod
                 hit.AttackType = 0;
                 hit.Multiplier = multiplier;
                 hit.Direction = HeroController.instance.cState.facingRight ? 0 : 180;
-                hit.MagnitudeMultiplier = PlayerData.instance.equippedCharm_15 ? 2f : 0f;
+                hit.MagnitudeMultiplier = PlayerData.instance.GetBool("equippedCharm_15") ? 2f : 0f;
             }
             else if (hitter.GameObject.name.Contains("Slash"))
             {
@@ -298,12 +239,6 @@ namespace BlackmothMod
             {
                 LogDebug($@"Setting damage for {hitter.GameObject.name}");
                 hit.DamageDealt = dashDamage;
-            }
-            FieldInfo[] pinfo = hit.GetType().GetFields();
-            LogDebug($"{hitter.GameObject.name} HitInstance:");
-            foreach (FieldInfo stat in pinfo)
-            {
-                LogDebug($"{stat.Name} = {stat.GetValue(hit)}");
             }
             return hit;
         }
@@ -364,7 +299,7 @@ namespace BlackmothMod
                     }
                     if (state.Name == "Relinquish Control")
                     {
-                        if (PlayerData.instance.killedNightmareGrimm)
+                        if (PlayerData.instance.GetBool("killedNightmareGrimm"))
                         {
                             if (HeroController.instance.cState.wallSliding)
                             {
@@ -397,11 +332,12 @@ namespace BlackmothMod
         {
             float num;
             Vector2 ret;
+            if (heroRigidbody2D == null) heroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
             if (PlayerData.instance.GetBool("equippedCharm_16"))
             {
-                if (!PlayerData.instance.hasDash)
+                if (!PlayerData.instance.GetBool("hasDash"))
                 {
-                    if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+                    if (PlayerData.instance.GetBool("equippedCharm_16") && HeroController.instance.cState.shadowDashing)
                     {
                         num = HeroController.instance.DASH_SPEED_SHARP;
                     }
@@ -410,7 +346,7 @@ namespace BlackmothMod
                         num = HeroController.instance.DASH_SPEED;
                     }
                 }
-                else if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+                else if (PlayerData.instance.GetBool("equippedCharm_16") && HeroController.instance.cState.shadowDashing)
                 {
                     num = HeroController.instance.DASH_SPEED_SHARP * 1.2f;
                 }
@@ -418,11 +354,11 @@ namespace BlackmothMod
                 {
                     num = HeroController.instance.DASH_SPEED * 1.2f;
                 }
-                if (PlayerData.instance.equippedCharm_18)
+                if (PlayerData.instance.GetBool("equippedCharm_18"))
                 {
                     num *= 1.2f;
                 }
-                if (PlayerData.instance.equippedCharm_13)
+                if (PlayerData.instance.GetBool("equippedCharm_13"))
                 {
                     num *= 1.5f;
                 }
@@ -456,17 +392,17 @@ namespace BlackmothMod
                 {
                     ret = Time.deltaTime * (num / Mathf.Sqrt(2)) * DashDirection;
                 }
-                HeroController.instance.GetComponent<Rigidbody2D>().position = HeroController.instance.GetComponent<Rigidbody2D>().position + ret;
+                heroRigidbody2D.position = heroRigidbody2D.position + ret;
                 return Vector2.zero;
             }
 
-            if (!PlayerData.instance.hasDash)
+            if (!PlayerData.instance.GetBool("hasDash"))
             {
-                num = PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing
+                num = PlayerData.instance.GetBool("equippedCharm_16") && HeroController.instance.cState.shadowDashing
                     ? HeroController.instance.DASH_SPEED_SHARP
                     : HeroController.instance.DASH_SPEED;
             }
-            else if (PlayerData.instance.equippedCharm_16 && HeroController.instance.cState.shadowDashing)
+            else if (PlayerData.instance.GetBool("equippedCharm_16") && HeroController.instance.cState.shadowDashing)
             {
                 num = HeroController.instance.DASH_SPEED_SHARP * 1.2f;
             }
@@ -474,11 +410,11 @@ namespace BlackmothMod
             {
                 num = HeroController.instance.DASH_SPEED * 1.2f;
             }
-            if (PlayerData.instance.equippedCharm_18)
+            if (PlayerData.instance.GetBool("equippedCharm_18"))
             {
                 num *= 1.2f;
             }
-            if (PlayerData.instance.equippedCharm_13)
+            if (PlayerData.instance.GetBool("equippedCharm_13"))
             {
                 num *= 1.5f;
             }
@@ -510,7 +446,7 @@ namespace BlackmothMod
             GetPrivateField("dashQueueSteps").SetValue(HeroController.instance, 0);
             GetPrivateField("dashQueuing").SetValue(HeroController.instance, false);
             HeroActions direction = GameManager.instance.inputHandler.inputActions;
-            if (PlayerData.instance.equippedCharm_35)
+            if (PlayerData.instance.GetBool("equippedCharm_35"))
             {
                 GetPrivateField("dashCooldownTimer").SetValue(HeroController.instance, 0f);
                 GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, 0);
@@ -546,12 +482,12 @@ namespace BlackmothMod
                 DashDirection.x = 0;
             }
             LogDebug($@"Dash direction: {DashDirection}");
-            if (!PlayerData.instance.hasDash)
+            if (!PlayerData.instance.GetBool("hasDash"))
             {
                 DashDirection.y = 0;
                 DashDirection.x = HeroController.instance.cState.facingRight ? 1 : -1;
             }
-            if (!PlayerData.instance.equippedCharm_35) DoDash();
+            if (!PlayerData.instance.GetBool("equippedCharm_35")) DoDash();
 
             // Fixes TC bug where after tink sharp shadow is broken
             sharpShadowFSM.SetState("Idle");
@@ -559,7 +495,7 @@ namespace BlackmothMod
 
         bool AirDashed()
         {
-            if (PlayerData.instance.equippedCharm_31)
+            if (PlayerData.instance.GetBool("equippedCharm_31"))
             {
                 if ((bool)GetPrivateField("airDashed").GetValue(HeroController.instance))
                 {
@@ -594,9 +530,9 @@ namespace BlackmothMod
                 && (HeroController.instance.cState.onGround
                 || !AirDashed()
                 || HeroController.instance.cState.wallSliding))
-                || PlayerData.instance.equippedCharm_35)
+                || PlayerData.instance.GetBool("equippedCharm_35"))
             {
-                sharpShadowVolume = PlayerData.instance.equippedCharm_35 ? 0.1f : 1f;
+                sharpShadowVolume = PlayerData.instance.GetBool("equippedCharm_35") ? 0.1f : 1f;
                 if ((!HeroController.instance.cState.onGround || DashDirection.y != 0) && !HeroController.instance.inAcid && !HeroController.instance.playerData.equippedCharm_32)
                 {
                     GetPrivateField("airDashed").SetValue(HeroController.instance, true);
@@ -781,7 +717,7 @@ Allows bearer to ascend and become the legendary Grubbermoth and fly away to the
                         break;
 
                     case "INV_DESC_SUPERDASH":
-                        ret = PlayerData.instance.defeatedNightmareGrimm ? @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+                        ret = PlayerData.instance.GetBool("defeatedNightmareGrimm") ? @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
 
 With the Nightmare defeated, the crystal has revealed its true potential, granting its wielder more flexibility." : @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
 
@@ -833,27 +769,46 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             return ret;
         }
 
-        private FieldInfo GetPrivateField(string fieldName) => HeroController.instance.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+        private FieldInfo GetPrivateField(string fieldName)
+        {
+            if (!privateFields.ContainsKey(fieldName))
+            {
+                privateFields.Add(fieldName,
+                    HeroController.instance.GetType()
+                        .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance));
+            }
+            return privateFields[fieldName];
+        }
 
-        private void InvokePrivateMethod(string methodName) => HeroController.instance.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(HeroController.instance, new object[] { });
-
+        private void InvokePrivateMethod(string methodName)
+        {
+            if (!privateMethods.ContainsKey(methodName))
+            {
+                privateMethods.Add(methodName,
+                    HeroController.instance.GetType()
+                        .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance));
+            }
+            privateMethods[methodName]?.Invoke(HeroController.instance, new object[] { });
+        }
 
         public Vector2 DashDirection;
         public GameObject sharpShadow;
         public PlayMakerFSM superDash;
         public PlayMakerFSM sharpShadowFSM;
         public PlayMakerFSM sharpShadowControl;
-        int Multiplier { get; set; } = 1;
-        int oldDashDamage { get; set; } = 0;
+        int oldDashDamage { get; set; }
         int dashDamage { get; set; }
         float dashCooldown { get; set; }
         float dashCooldownStart { get; set; }
         float dashCooldownHasDash { get; set; }
-        float oldDashInvulTimer { get; set; } = 0f;
-        float dashInvulTimer { get; set; } = 0f;
+        float oldDashInvulTimer { get; set; }
+        float dashInvulTimer { get; set; }
         float sharpShadowVolume { get; set; }
-        int dashCount { get; set; } = 0;
-        bool grubberOn = false;
+        int dashCount { get; set; }
+        private bool grubberOn;
+        private Rigidbody2D heroRigidbody2D;
         Vector3 heroPos { get; set; } = Vector3.zero;
+        private Dictionary<string, FieldInfo> privateFields;
+        private Dictionary<string, MethodInfo> privateMethods;
     }
 }
