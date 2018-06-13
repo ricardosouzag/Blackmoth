@@ -21,3 +21,16 @@ C:\Users\ayugr\source\repos\Blackmoth\obj\Debug\BlackmothMod.csproj.CoreCompileI
 C:\Users\ayugr\source\repos\Blackmoth\obj\Debug\BlackmothMod.csproj.CopyComplete
 C:\Users\ayugr\source\repos\Blackmoth\obj\Debug\Blackmoth.dll
 C:\Users\ayugr\source\repos\Blackmoth\obj\Debug\Blackmoth.pdb
+C:\Users\Ricardo Souza\GitLab\Blackmoth\obj\Debug\BlackmothMod.csprojAssemblyReference.cache
+C:\Users\Ricardo Souza\GitLab\Blackmoth\obj\Debug\BlackmothMod.csproj.CoreCompileInputs.cache
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\Blackmoth.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\Blackmoth.pdb
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\Assembly-CSharp.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\ModCommon.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\PlayMaker.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\UnityEngine.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\UnityEngine.UI.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\bin\Debug\Assembly-CSharp-firstpass.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\obj\Debug\BlackmothMod.csproj.CopyComplete
+C:\Users\Ricardo Souza\GitLab\Blackmoth\obj\Debug\Blackmoth.dll
+C:\Users\Ricardo Souza\GitLab\Blackmoth\obj\Debug\Blackmoth.pdb
