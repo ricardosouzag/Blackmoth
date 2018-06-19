@@ -328,7 +328,7 @@ namespace BlackmothMod
         }
 
 
-        private Vector2 CalculateDashVelocity()
+        private Vector2 CalculateDashVelocity(Vector2 change)
         {
             float num;
             Vector2 ret;
