@@ -480,7 +480,7 @@ namespace BlackmothMod
             }
             if (!PlayerData.instance.GetBool("equippedCharm_35")) DoDash();
 
-            // Fixes TC bug where after tink sharp shadow is broken
+            // Fixes TC problem where after tink sharp shadow is broken
             sharpShadowFSM.SetState("Idle");
         }
 
