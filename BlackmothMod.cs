@@ -31,6 +31,9 @@ namespace BlackmothMod
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += ResetPosition;
             ModHooks.Instance.HitInstanceHook += SetDamages;
 
+            // Init dictionaries to stop nullRef.
+            privateFields = new Dictionary<string, FieldInfo>();
+            privateMethods = new Dictionary<string, MethodInfo>();
             Instance.Log("Blackmoth initialized!");
         }
 
@@ -437,7 +440,7 @@ namespace BlackmothMod
             if (PlayerData.instance.GetBool("equippedCharm_35"))
             {
                 GetPrivateField("dashCooldownTimer").SetValue(HeroController.instance, 0f);
-                GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, 0);
+                GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, 0f);
             }
 
             if (direction.up.IsPressed)
