@@ -1,4 +1,5 @@
-﻿using GlobalEnums;
+﻿using System;
+using GlobalEnums;
 using Modding;
 using System.Reflection;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace BlackmothMod
     {
         private static Blackmoth Instance;
 
-        public override string GetVersion() => "1.7.0";
+        public override string GetVersion() => "1.7.1";
 
         public override void Initialize()
         {
@@ -29,18 +30,11 @@ namespace BlackmothMod
             ModHooks.Instance.LanguageGetHook += Descriptions;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += ResetPosition;
             ModHooks.Instance.HitInstanceHook += SetDamages;
-            On.PlayMakerFSM.Awake += PlayMakerFSM_Awake;
 
+            // Init dictionaries to stop nullRef.
+            privateFields = new Dictionary<string, FieldInfo>();
+            privateMethods = new Dictionary<string, MethodInfo>();
             Instance.Log("Blackmoth initialized!");
-        }
-
-        private void PlayMakerFSM_Awake(On.PlayMakerFSM.orig_Awake orig, PlayMakerFSM self)
-        {
-            if (sharpShadowControl == null)
-            {
-                if (self.name.Contains("Sharp Shadow Impact")) sharpShadowControl = self;
-            }
-            orig(self);
         }
 
         private void Update()
@@ -51,6 +45,10 @@ namespace BlackmothMod
                 CheckForDash();
             }
 
+            if (antiTurboDashFrames > 0 && dashInvulTimer <= 0)
+            {
+                antiTurboDashFrames--;
+            }
             if (dashInvulTimer > 0)
             {
                 HeroController.instance.cState.invulnerable = true;
@@ -59,6 +57,11 @@ namespace BlackmothMod
             {
                 oldDashInvulTimer = 0;
                 HeroController.instance.cState.invulnerable = false;
+                // Set to the minimum number of frames between dashes. By default. 1 + however long one tick is rounded
+                // down. I think this is the minimum possible # of frames that will still prevent turbo abuse for
+                // invulnerability. You can still use the turbo button to go really fast though.
+                antiTurboDashFrames = 1 + (int) (Time.fixedDeltaTime / Time.deltaTime);
+                LogDebug("Anti-turbo set to " + antiTurboDashFrames);
             }
 
             if (PlayerData.instance.GetBool("hasSuperDash") && PlayerData.instance.GetBool("defeatedNightmareGrimm")) AirSuperDash();
@@ -70,9 +73,6 @@ namespace BlackmothMod
             //NewSuperDash();
 
             HeroController.instance.gameObject.transform.position = GrubbersHandling();
-
-            if (sharpShadowControl != null && sharpShadowControl.FsmStates[0].Active)
-                sharpShadowControl.SendEvent("FINISHED");
         }
 
         void ResetPosition(Scene scene, LoadSceneMode mode)
@@ -441,6 +441,8 @@ namespace BlackmothMod
 
         public void CheckForDash()
         {
+            if (antiTurboDashFrames > 0)
+                return;
             dashCooldownStart = dashCooldownStart == HeroController.instance.DASH_COOLDOWN_CH * 0.4f ? dashCooldownStart : HeroController.instance.DASH_COOLDOWN_CH * 0.4f;
             dashCooldownHasDash = dashCooldownHasDash == HeroController.instance.DASH_COOLDOWN_CH * 0.1f ? dashCooldownHasDash : HeroController.instance.DASH_COOLDOWN_CH * 0.1f;
             GetPrivateField("dashQueueSteps").SetValue(HeroController.instance, 0);
@@ -449,7 +451,7 @@ namespace BlackmothMod
             if (PlayerData.instance.GetBool("equippedCharm_35"))
             {
                 GetPrivateField("dashCooldownTimer").SetValue(HeroController.instance, 0f);
-                GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, 0);
+                GetPrivateField("shadowDashTimer").SetValue(HeroController.instance, 0f);
             }
 
             if (direction.up.IsPressed)
@@ -489,7 +491,7 @@ namespace BlackmothMod
             }
             if (!PlayerData.instance.GetBool("equippedCharm_35")) DoDash();
 
-            // Fixes TC bug where after tink sharp shadow is broken
+            // Fixes TC problem where after tink sharp shadow is broken
             sharpShadowFSM.SetState("Idle");
         }
 
@@ -795,7 +797,6 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         public GameObject sharpShadow;
         public PlayMakerFSM superDash;
         public PlayMakerFSM sharpShadowFSM;
-        public PlayMakerFSM sharpShadowControl;
         int oldDashDamage { get; set; }
         int dashDamage { get; set; }
         float dashCooldown { get; set; }
@@ -805,6 +806,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         float dashInvulTimer { get; set; }
         float sharpShadowVolume { get; set; }
         int dashCount { get; set; }
+        private int antiTurboDashFrames = 0;
         private bool grubberOn;
         private Rigidbody2D heroRigidbody2D;
         Vector3 heroPos { get; set; } = Vector3.zero;

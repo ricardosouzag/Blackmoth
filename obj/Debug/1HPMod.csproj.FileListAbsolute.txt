@@ -1,9 +1,0 @@
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\bin\Debug\1 HP Mod.dll
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\bin\Debug\1 HP Mod.pdb
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\bin\Debug\Assembly-CSharp.dll
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\bin\Debug\Assembly-CSharp.xml
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\bin\Debug\UnityEngine.xml
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\obj\Debug\1HPMod.csprojResolveAssemblyReference.cache
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\obj\Debug\1HPMod.csproj.CoreCompileInputs.cache
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\obj\Debug\1 HP Mod.dll
-C:\Users\ayugr\Downloads\HK MODDING\DLLS\[1.1.1.8] Blackmoth (by Gradow)\Blackmoth-master\Blackmoth-master\Blackmoth\obj\Debug\1 HP Mod.pdb
