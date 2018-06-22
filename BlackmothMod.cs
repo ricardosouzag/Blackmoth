@@ -14,7 +14,7 @@ namespace BlackmothMod
     {
         private static Blackmoth Instance;
 
-        public override string GetVersion() => "1.7.0";
+        public override string GetVersion() => "1.7.1";
 
         public override void Initialize()
         {
@@ -45,6 +45,10 @@ namespace BlackmothMod
                 CheckForDash();
             }
 
+            if (antiTurboDashFrames > 0 && dashInvulTimer <= 0)
+            {
+                antiTurboDashFrames--;
+            }
             if (dashInvulTimer > 0)
             {
                 HeroController.instance.cState.invulnerable = true;
@@ -53,6 +57,11 @@ namespace BlackmothMod
             {
                 oldDashInvulTimer = 0;
                 HeroController.instance.cState.invulnerable = false;
+                // Set to the minimum number of frames between dashes. By default. 1 + however long one tick is rounded
+                // down. I think this is the minimum possible # of frames that will still prevent turbo abuse for
+                // invulnerability. You can still use the turbo button to go really fast though.
+                antiTurboDashFrames = 1 + (int) (Time.fixedDeltaTime / Time.deltaTime);
+                LogDebug("Anti-turbo set to " + antiTurboDashFrames);
             }
 
             if (PlayerData.instance.GetBool("hasSuperDash") && PlayerData.instance.GetBool("defeatedNightmareGrimm")) AirSuperDash();
@@ -432,6 +441,8 @@ namespace BlackmothMod
 
         public void CheckForDash()
         {
+            if (antiTurboDashFrames > 0)
+                return;
             dashCooldownStart = dashCooldownStart == HeroController.instance.DASH_COOLDOWN_CH * 0.4f ? dashCooldownStart : HeroController.instance.DASH_COOLDOWN_CH * 0.4f;
             dashCooldownHasDash = dashCooldownHasDash == HeroController.instance.DASH_COOLDOWN_CH * 0.1f ? dashCooldownHasDash : HeroController.instance.DASH_COOLDOWN_CH * 0.1f;
             GetPrivateField("dashQueueSteps").SetValue(HeroController.instance, 0);
@@ -795,6 +806,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         float dashInvulTimer { get; set; }
         float sharpShadowVolume { get; set; }
         int dashCount { get; set; }
+        private int antiTurboDashFrames = 0;
         private bool grubberOn;
         private Rigidbody2D heroRigidbody2D;
         Vector3 heroPos { get; set; } = Vector3.zero;
