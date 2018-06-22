@@ -30,18 +30,8 @@ namespace BlackmothMod
             ModHooks.Instance.LanguageGetHook += Descriptions;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += ResetPosition;
             ModHooks.Instance.HitInstanceHook += SetDamages;
-            On.PlayMakerFSM.Awake += PlayMakerFSM_Awake;
 
             Instance.Log("Blackmoth initialized!");
-        }
-
-        private void PlayMakerFSM_Awake(On.PlayMakerFSM.orig_Awake orig, PlayMakerFSM self)
-        {
-            if (sharpShadowControl == null)
-            {
-                if (self.name.Contains("Sharp Shadow Impact")) sharpShadowControl = self;
-            }
-            orig(self);
         }
 
         private void Update()
@@ -71,9 +61,6 @@ namespace BlackmothMod
             //NewSuperDash();
 
             HeroController.instance.gameObject.transform.position = GrubbersHandling();
-
-            if (sharpShadowControl != null && sharpShadowControl.FsmStates[0].Active)
-                sharpShadowControl.SendEvent("FINISHED");
         }
 
         void ResetPosition(Scene scene, LoadSceneMode mode)
@@ -796,7 +783,6 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         public GameObject sharpShadow;
         public PlayMakerFSM superDash;
         public PlayMakerFSM sharpShadowFSM;
-        public PlayMakerFSM sharpShadowControl;
         int oldDashDamage { get; set; }
         int dashDamage { get; set; }
         float dashCooldown { get; set; }
