@@ -12,9 +12,9 @@ namespace BlackmothMod
 {
     public class Blackmoth : Mod
     {
-        private static Blackmoth Instance;
+        public static Blackmoth Instance;
 
-        public override string GetVersion() => "1.7.1";
+        public override string GetVersion() => "1.7.2";
 
         public override void Initialize()
         {
@@ -393,7 +393,7 @@ namespace BlackmothMod
                     ret = Time.deltaTime * (num / Mathf.Sqrt(2)) * DashDirection;
                 }
                 heroRigidbody2D.position = heroRigidbody2D.position + ret;
-                return Vector2.zero;
+                return (ret * 0.001f);
             }
 
             if (!PlayerData.instance.GetBool("hasDash"))
@@ -807,7 +807,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         float sharpShadowVolume { get; set; }
         int dashCount { get; set; }
         private int antiTurboDashFrames = 0;
-        private bool grubberOn;
+        public bool grubberOn;
         private Rigidbody2D heroRigidbody2D;
         Vector3 heroPos { get; set; } = Vector3.zero;
         private Dictionary<string, FieldInfo> privateFields;
