@@ -489,10 +489,14 @@ namespace BlackmothMod
                 DashDirection.y = 0;
                 DashDirection.x = HeroController.instance.cState.facingRight ? 1 : -1;
             }
-            if (!PlayerData.instance.GetBool("equippedCharm_35")) DoDash();
 
-            // Fixes TC problem where after tink sharp shadow is broken
-            sharpShadowFSM.SetState("Idle");
+            if (!PlayerData.instance.GetBool("equippedCharm_35"))
+            {
+                DoDash();
+
+                // Fixes TC problem where after tink sharp shadow is broken
+                sharpShadowFSM.SetState("Idle");
+            }
         }
 
         bool AirDashed()
