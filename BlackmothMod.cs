@@ -34,6 +34,10 @@ namespace BlackmothMod
             // Init dictionaries to stop nullRef.
             privateFields = new Dictionary<string, FieldInfo>();
             privateMethods = new Dictionary<string, MethodInfo>();
+
+            privateFields = new Dictionary<string, FieldInfo>();
+            privateMethods = new Dictionary<string, MethodInfo>();
+
             Instance.Log("Blackmoth initialized!");
         }
 
@@ -439,10 +443,10 @@ namespace BlackmothMod
         }
 
 
-        public void CheckForDash()
+        public bool CheckForDash()
         {
             if (antiTurboDashFrames > 0)
-                return;
+                return true;
             dashCooldownStart = dashCooldownStart == HeroController.instance.DASH_COOLDOWN_CH * 0.4f ? dashCooldownStart : HeroController.instance.DASH_COOLDOWN_CH * 0.4f;
             dashCooldownHasDash = dashCooldownHasDash == HeroController.instance.DASH_COOLDOWN_CH * 0.1f ? dashCooldownHasDash : HeroController.instance.DASH_COOLDOWN_CH * 0.1f;
             GetPrivateField("dashQueueSteps").SetValue(HeroController.instance, 0);
@@ -497,6 +501,8 @@ namespace BlackmothMod
                 // Fixes TC problem where after tink sharp shadow is broken
                 sharpShadowFSM.SetState("Idle");
             }
+
+            return true;
         }
 
         bool AirDashed()
