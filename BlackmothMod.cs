@@ -42,8 +42,7 @@ namespace BlackmothMod
             LogDebug("Initializing dictionaries.");
             privateFields = new Dictionary<string, FieldInfo>();
             privateMethods = new Dictionary<string, MethodInfo>();
-            FlavorDictionary = new Dictionary<int, Dictionary<string, string>>();
-            PromptDictionary = new Dictionary<int, Dictionary<string, string>>();
+            FlavorDictionary = new Dictionary<Dictionary<int, string>, Dictionary<string, string>>();
             Dictionary<string, string> ptbrUIDictionary = new Dictionary<string, string>
             {
                 ["CHARM_DESC_13"] = @"Dado livremente pela Tribo dos Louva-deuses àqueles dignos de respeito.
@@ -198,17 +197,11 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
 
                 ["GET_DASH_1"] = "while holding any direction to dash in that direction."
             };
-            FlavorDictionary.Add(147, ptbrUIDictionary);
-            for (int i = 44; i <= 55; i++)
-            {
-                FlavorDictionary.Add(i, enUIDictionary);
-            }
-            PromptDictionary.Add(147, ptbrPromptDictionary);
-            for (int i = 44; i <= 55; i++)
-            {
-                PromptDictionary.Add(i, enPromptDictionary);
-            }
-            Log("Finished initializing dictionaries.");
+            FlavorDictionary.Add(new Dictionary<int, string> { [147] = "UI" }, ptbrUIDictionary);
+            FlavorDictionary.Add(new Dictionary<int, string> { [147] = "Prompts" }, ptbrPromptDictionary);
+            FlavorDictionary.Add(new Dictionary<int, string> { [44] = "UI" }, enUIDictionary);
+            FlavorDictionary.Add(new Dictionary<int, string> { [44] = "Prompts" }, enPromptDictionary);
+            LogDebug("Finished initializing dictionaries.");
         }
 
         private void Update()
@@ -818,17 +811,9 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         {
             string ret = Language.Language.GetInternal(key, sheet);
             int lang = (int)Language.Language.CurrentLanguage();
-            if (sheet == "UI")
-            {
-                if (!FlavorDictionary[lang].ContainsKey(key)) return ret;
-                return FlavorDictionary[lang][key];
-            }
-            if (sheet == "Prompts")
-            {
-                if (!PromptDictionary[lang].ContainsKey(key)) return ret;
-                return PromptDictionary[lang][key];
-            }
-            return ret;
+            Dictionary<int, string> langSheet = new Dictionary<int, string> { [lang] = sheet };
+            if (!FlavorDictionary.ContainsKey(langSheet)) return ret;
+            return FlavorDictionary[langSheet].ContainsKey(key) ? FlavorDictionary[langSheet][key] : ret;
         }
 
         private FieldInfo GetPrivateField(string fieldName)
@@ -872,7 +857,6 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         Vector3 heroPos { get; set; } = Vector3.zero;
         private Dictionary<string, FieldInfo> privateFields;
         private Dictionary<string, MethodInfo> privateMethods;
-        public Dictionary<int, Dictionary<string, string>> FlavorDictionary;
-        public Dictionary<int, Dictionary<string, string>> PromptDictionary;
+        public Dictionary<Dictionary<int, string>, Dictionary<string, string>> FlavorDictionary;
     }
 }
