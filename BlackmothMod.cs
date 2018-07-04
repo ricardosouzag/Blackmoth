@@ -7,6 +7,7 @@ using HutongGames.PlayMaker;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BlackmothMod
 {
@@ -32,13 +33,182 @@ namespace BlackmothMod
             ModHooks.Instance.HitInstanceHook += SetDamages;
 
             // Init dictionaries to stop nullRef.
-            privateFields = new Dictionary<string, FieldInfo>();
-            privateMethods = new Dictionary<string, MethodInfo>();
-
-            privateFields = new Dictionary<string, FieldInfo>();
-            privateMethods = new Dictionary<string, MethodInfo>();
-
+            InitializeDictionaries();
             Instance.Log("Blackmoth initialized!");
+        }
+
+        private void InitializeDictionaries()
+        {
+            LogDebug("Initializing dictionaries.");
+            privateFields = new Dictionary<string, FieldInfo>();
+            privateMethods = new Dictionary<string, MethodInfo>();
+            FlavorDictionary = new Dictionary<int, Dictionary<string, string>>();
+            PromptDictionary = new Dictionary<int, Dictionary<string, string>>();
+            Dictionary<string, string> ptbrUIDictionary = new Dictionary<string, string>
+            {
+                ["CHARM_DESC_13"] = @"Dado livremente pela Tribo dos Louva-deuses àqueles dignos de respeito.
+
+Aumenta consideravelmente o alcance da esquiva do portador, permitindo-o atacar inimigos mais distantes.",
+
+                ["CHARM_DESC_15"] = @"Formado de mantos de guerreiros caídos.
+                            
+Aumenta a força da esquiva do portador, fazendo inimigos recuarem mais quando atacados.",
+
+                ["CHARM_DESC_16"] = @"Contém um feitiço proibido que transforma matéria em vazio.
+
+Enquanto usa a esquiva, o corpo do portador poderá ir através de objetos sólidos.",
+
+                ["CHARM_DESC_18"] = @"Aumenta o alcance da esquiva do portador, permitindo-o atacar inimigos mais de longe.",
+
+                ["CHARM_DESC_25"] = @"Fortalece o portador, aumentando o dano que ele causa aos inimigos com sua esquiva.
+
+Esse amuleto é frágil e quebrará se o portador for morto",
+
+                ["CHARM_DESC_25_G"] = @"Fortalece o portador, aumentando o dano que ele causa nos inimigos com sua esquiva.
+
+Esse amuleto é inquebrável.",
+
+                ["CHARM_DESC_31"] = $@"Tem a semelhança de um inseto excêntrico conhecido apenas como {"O Mestre da Esquiva"}.
+
+O portador será capaz de se esquivar mais, bem como esquivar-se em pleno ar. Perfeito para aqueles que querem se mover o mais rápido possível.",
+
+                ["CHARM_DESC_32"] = @"Nascido de mantos descartados e imperfeitos que se uniram. Esses mantos ainda anseiam ser usados.
+
+Permite o portador a golpear muito mais rapidamente com sua esquiva.",
+
+                ["CHARM_DESC_35"] = @"Contém a gratidão de larvas que vão se mover para o próximo estágio de suas vidas. Confere uma força sagrada.
+
+Permite ao portador ascender e se tornar o lendário Grubbermoth e voar pelos céus.",
+
+                ["CHARM_NAME_16"] = @"Sombra do Vazio",
+
+                ["CHARM_NAME_18"] = @"Longa Esquiva",
+
+                ["CHARM_NAME_32"] = @"Esquiva Veloz",
+
+                ["CHARM_NAME_35"] = @"Elegia do Grubbermoth.",
+
+                ["INV_DESC_DASH"] = @"Manto feito com asas de mariposa. Permite ao usuário a esquivar-se em todas as direções.",
+
+                ["INV_DESC_SHADOWDASH"] = @"Capa formada da substância do Abismo, o progenitor do Blackmoth. Permite ao usuário a ganhar ALMA e dar o dobro do dano enquanto se esquiva.",
+
+                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm") ? @"O núcleo de energia de um velho golem minerador enfeitado de um potente cristal. A energia pode ser usada para lançar o portador pra frente em velocidades perigosas.
+
+Com o Pesadelo derrotado, o cristal revelou seu verdadeiro potencial, conferindo ao portador mais flexibilidade." : @"O núcleo de energia de um velho golem minerador enfeitado de um potente cristal. A energia pode ser usada para lançar o portador pra frente em velocidades perigosas.
+
+Mesmo que seja bem poderoso, parece que um Pesadelo o impede de revelar seu verdadeiro potencial...",
+
+                ["INV_NAME_SHADOWDASH"] = @"Manto de Blackmoth",
+            };
+            Dictionary<string, string> enUIDictionary = new Dictionary<string, string>
+            {
+                ["CHARM_DESC_13"] = @"Freely given by the Mantis Tribe to those they respect.
+
+Greatly increases the range of the bearer's dash, allowing them to strike foes from further away.",
+
+                ["CHARM_DESC_15"] = @"Formed from the cloaks of fallen warriors.
+                            
+Increases the force of the bearer's dash, causing enemies to recoil further when hit.",
+
+                ["CHARM_DESC_16"] = @"Contains a forbidden spell that transforms matter into void.
+
+When dashing, the bearer's body will be able to go through solid objects.",
+
+                ["CHARM_DESC_18"] =
+                    @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
+
+This charm is fragile, and will break if its bearer is killed.",
+
+                ["CHARM_DESC_25_G"] =
+                    @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
+
+This charm is ubreakable.",
+
+                ["CHARM_DESC_31"] = $@"Bears the likeness of an eccentric bug known only as {"The Dashmaster"}.
+
+The bearer will be able to dash more often as well as dash in midair. Perfect for those who want to move around as quickly as possible.",
+
+                ["CHARM_DESC_32"] =
+                    @"Born from imperfect, discarded cloaks that have fused together. The cloaks still long to be worn.
+
+Allows the bearer to slash much more rapidly with their dash.",
+
+                ["CHARM_DESC_35"] =
+                    @"Contains the gratitude of grubs who will move to the next stage of their lives. Imbues weapons with a holy strength.
+
+Allows bearer to ascend and become the legendary Grubbermoth and fly away to the heavens.",
+
+                ["CHARM_NAME_16"] = @"Void Shade",
+
+                ["CHARM_NAME_18"] = @"Longdash",
+
+                ["CHARM_NAME_32"] = @"Quick Dash",
+
+                ["CHARM_NAME_35"] = @"Grubbermoth's Elegy",
+
+                ["INV_DESC_DASH"] =
+                    @"Cloak threaded with mothwing strands. Allows the wearer to dash in every direction.",
+
+                ["INV_DESC_SHADOWDASH"] =
+                    @"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain SOUL and deal double damage while dashing.",
+
+                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm")
+                    ? @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+
+With the Nightmare defeated, the crystal has revealed its true potential, granting its wielder more flexibility."
+                    : @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+
+Even though it's quite powerful, it seems as if a Nightmare is preventing it from unleashing its true potential...",
+
+                ["INV_NAME_SHADOWDASH"] = @"Blackmoth Cloak"
+            };
+            Dictionary<string, string> ptbrPromptDictionary = new Dictionary<string, string>
+            {
+                ["NAILSMITH_UPGRADE_1"] = "Pagar Geo para fortalecer a esquiva?",
+
+                ["NAILSMITH_UPGRADE_2"] = "Dar Minério Pálido e Geo para fortalecer a esquiva?",
+
+                ["NAILSMITH_UPGRADE_3"] = "Dar doi Minérios Pálido e Geo para fortalecer a esquiva?",
+
+                ["NAILSMITH_UPGRADE_4"] = "Dar trê Minérios Pálido e Geo para fortalecer a esquiva?",
+
+                ["GET_SHADOWDASH_2"] = "Use o manto para atravessar as costuras na realidade e pegar ALMA do espaço intermediário.",
+
+                ["GET_SHADOWDASH_1"] = "para se esquivar enquanto coleta ALMA do ambiente.",
+
+                ["GET_DASH_2"] = "Use o manto para esquivar-se rapidamente através do ar em todas as direções.",
+
+                ["GET_DASH_1"] = "e qualquer direção para esquivar-se naquela direção."
+            };
+            Dictionary<string, string> enPromptDictionary = new Dictionary<string, string>
+            {
+                ["NAILSMITH_UPGRADE_1"] = "Pay Geo to strengthen dash?",
+
+                ["NAILSMITH_UPGRADE_2"] = "Give Pale Ore and Geo to strengthen dash?",
+
+                ["NAILSMITH_UPGRADE_3"] = "Give two Pale Ore and Geo to strengthen dash?",
+
+                ["NAILSMITH_UPGRADE_4"] = "Give three Pale Ore and Geo to strengthen dash?",
+
+                ["GET_SHADOWDASH_2"] = "Use the cloak to dash through the seams in reality and gather SOUL from the space in-between.",
+
+                ["GET_SHADOWDASH_1"] = "to dash while gathering SOUL from the environment.",
+
+                ["GET_DASH_2"] = "Use the cloak to dash quickly through the air in all directions.",
+
+                ["GET_DASH_1"] = "while holding any direction to dash in that direction."
+            };
+            FlavorDictionary.Add(147, ptbrUIDictionary);
+            for (int i = 44; i <= 55; i++)
+            {
+                FlavorDictionary.Add(i, enUIDictionary);
+            }
+            PromptDictionary.Add(147, ptbrPromptDictionary);
+            for (int i = 44; i <= 55; i++)
+            {
+                PromptDictionary.Add(i, enPromptDictionary);
+            }
+            Log("Finished initializing dictionaries.");
         }
 
         private void Update()
@@ -64,7 +234,7 @@ namespace BlackmothMod
                 // Set to the minimum number of frames between dashes. By default. 1 + however long one tick is rounded
                 // down. I think this is the minimum possible # of frames that will still prevent turbo abuse for
                 // invulnerability. You can still use the turbo button to go really fast though.
-                antiTurboDashFrames = 1 + (int) (Time.fixedDeltaTime / Time.deltaTime);
+                antiTurboDashFrames = 1 + (int)(Time.fixedDeltaTime / Time.deltaTime);
                 LogDebug("Anti-turbo set to " + antiTurboDashFrames);
             }
 
@@ -147,7 +317,7 @@ namespace BlackmothMod
                         vector3 += Vector3.up;
                         HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
                         ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, 0.2f);
-                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 0.58f, HeroController.instance.transform.position.y - 5.21f, HeroController.instance.transform.position.z + 0.00101f), new Quaternion(0f, 0f, - 0.7071f, 0.7071f)));
+                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 0.58f, HeroController.instance.transform.position.y - 5.21f, HeroController.instance.transform.position.z + 0.00101f), new Quaternion(0f, 0f, -0.7071f, 0.7071f)));
                         ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(1.919591f, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.y, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.z);
                     }
                     if (GameManager.instance.inputHandler.inputActions.down.IsPressed)
@@ -155,7 +325,7 @@ namespace BlackmothMod
                         vector3 += Vector3.down;
                         HeroController.instance.proxyFSM.SendEvent("HeroCtrl-ShadowDash");
                         ((AudioSource)GetPrivateField("audioSource").GetValue(HeroController.instance)).PlayOneShot(HeroController.instance.sharpShadowClip, 0.2f);
-                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 0.58f, HeroController.instance.transform.position.y + 5.21f, HeroController.instance.transform.position.z + 0.00101f), new Quaternion(0f, 0f, + 0.7071f, 0.7071f)));
+                        GetPrivateField("dashEffect").SetValue(HeroController.instance, HeroController.instance.shadowdashBurstPrefab.Spawn(new Vector3(HeroController.instance.transform.position.x - 0.58f, HeroController.instance.transform.position.y + 5.21f, HeroController.instance.transform.position.z + 0.00101f), new Quaternion(0f, 0f, +0.7071f, 0.7071f)));
                         ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale = new Vector3(1.919591f, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.y, ((GameObject)GetPrivateField("dashEffect").GetValue(HeroController.instance)).transform.localScale.z);
                     }
                     if (GameManager.instance.inputHandler.inputActions.right.IsPressed)
@@ -178,7 +348,7 @@ namespace BlackmothMod
                     HeroController.instance.sharpShadowPrefab.SetActive(true);
                     heroPos += vector3 * num * Time.deltaTime;
                     ret = heroPos;
-                }                
+                }
             }
             return ret;
         }
@@ -264,7 +434,7 @@ namespace BlackmothMod
 
         private void GetReferences()
         {
-            GameManager.instance.StartCoroutine(ConfigureHero());            
+            GameManager.instance.StartCoroutine(ConfigureHero());
         }
 
         private void GetReferences(SaveGameData data)
@@ -376,7 +546,7 @@ namespace BlackmothMod
                         }
                         else
                         {
-                            ret = Time.deltaTime * new Vector2(num, 0f);                            
+                            ret = Time.deltaTime * new Vector2(num, 0f);
                         }
                     }
                     else if (HeroController.instance.CheckForBump(CollisionSide.left))
@@ -432,7 +602,7 @@ namespace BlackmothMod
                 {
                     ret = HeroController.instance.CheckForBump(CollisionSide.left)
                         ? new Vector2(-num,
-                            (float) GetPrivateField("BUMP_VELOCITY_DASH").GetValue(HeroController.instance))
+                            (float)GetPrivateField("BUMP_VELOCITY_DASH").GetValue(HeroController.instance))
                         : new Vector2(-num, 0f);
                 }
             }
@@ -647,136 +817,16 @@ namespace BlackmothMod
         string Descriptions(string key, string sheet)
         {
             string ret = Language.Language.GetInternal(key, sheet);
+            int lang = (int)Language.Language.CurrentLanguage();
             if (sheet == "UI")
             {
-                switch(key)
-                {
-                    case "CHARM_DESC_13":
-                        ret = @"Freely given by the Mantis Tribe to those they respect.
-
-Greatly increases the range of the bearer's dash, allowing them to strike foes from further away.";
-                        break;
-
-                    case "CHARM_DESC_15":
-                        ret = @"Formed from the cloaks of fallen warriors.
-                            
-Increases the force of the bearer's dash, causing enemies to recoil further when hit.";
-                        break;
-
-                    case "CHARM_DESC_16":
-                        ret = @"Contains a forbidden spell that transforms matter into void.
-
-When dashing, the bearer's body will be able to go through solid objects.";
-                        break;
-
-                    case "CHARM_DESC_18":
-                        ret =
-                            @"Increases the range of the bearer's dash, allowing them to strike foes from further away.";
-                        break;
-
-                    case "CHARM_DESC_25":
-                        ret = @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
-
-This charm is fragile, and will break if its bearer is killed.";
-                        break;
-
-                    case "CHARM_DESC_25_G":
-                        ret = @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
-
-This charm is ubreakable.";
-                        break;
-
-                    case "CHARM_DESC_31":
-                        ret = $@"Bears the likeness of an eccentric bug known only as {"The Dashmaster"}.
-
-The bearer will be able to dash more often as well as dash in midair. Perfect for those who want to move around as quickly as possible.";
-                        break;
-
-                    case "CHARM_DESC_32":
-                        ret = @"Born from imperfect, discarded cloaks that have fused together. The cloaks still long to be worn.
-
-Allows the bearer to slash much more rapidly with their dash.";
-                        break;
-
-                    case "CHARM_DESC_35":
-                        ret = @"Contains the gratitude of grubs who will move to the next stage of their lives. Imbues weapons with a holy strength.
-
-Allows bearer to ascend and become the legendary Grubbermoth and fly away to the heavens.";
-                        break;
-
-                    case "CHARM_NAME_16":
-                        ret = @"Void Shade";
-                        break;
-
-                    case "CHARM_NAME_18":
-                        ret = @"Longdash";
-                        break;
-
-                    case "CHARM_NAME_32":
-                        ret = @"Quick Dash";
-                        break;
-
-                    case "CHARM_NAME_35":
-                        ret = @"Grubbermoth's Elegy";
-                        break;
-
-                    case "INV_DESC_DASH":
-                        ret = @"Cloak threaded with mothwing strands. Allows the wearer to dash in every direction.";
-                        break;
-
-                    case "INV_DESC_SHADOWDASH":
-                        ret = @"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain soul and deal double damage while dashing.";
-                        break;
-
-                    case "INV_DESC_SUPERDASH":
-                        ret = PlayerData.instance.GetBool("defeatedNightmareGrimm") ? @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
-
-With the Nightmare defeated, the crystal has revealed its true potential, granting its wielder more flexibility." : @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
-
-Even though it's quite powerful, it seems as if a Nightmare is preventing it from unleashing its true potential...";
-                        break;
-
-                    case "INV_NAME_SHADOWDASH":
-                        ret = @"Blackmoth Cloak";
-                        break;
-                }
+                if (!FlavorDictionary[lang].ContainsKey(key)) return ret;
+                return FlavorDictionary[lang][key];
             }
-            else if (sheet == "Prompts")
+            if (sheet == "Prompts")
             {
-                switch(key)
-                {
-                    case "NAILSMITH_UPGRADE_1":
-                        ret = "Pay Geo to strengthen dash?";
-                        break;
-
-                    case "NAILSMITH_UPGRADE_2":
-                        ret = "Give Pale Ore and Geo to strengthen dash?";
-                        break;
-
-                    case "NAILSMITH_UPGRADE_3":
-                        ret = "Give two Pale Ore and Geo to strengthen dash?";
-                        break;
-
-                    case "NAILSMITH_UPGRADE_4":
-                        ret = "Give three Pale Ore and Geo to strengthen dash?";
-                        break;
-
-                    case "GET_SHADOWDASH_2":
-                        ret = "Use the cloak to dash through the seams in reality and gather soul from the space in-between.";
-                        break;
-
-                    case "GET_SHADOWDASH_1":
-                        ret = "to dash while gathering Soul from the environment.";
-                        break;
-
-                    case "GET_DASH_2":
-                        ret = "Use the cloak to dash quickly through the air in all directions.";
-                        break;
-
-                    case "GET_DASH_1":
-                        ret = "while holding any direction to dash in that direction.";
-                        break;
-                }
+                if (!PromptDictionary[lang].ContainsKey(key)) return ret;
+                return PromptDictionary[lang][key];
             }
             return ret;
         }
@@ -822,5 +872,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         Vector3 heroPos { get; set; } = Vector3.zero;
         private Dictionary<string, FieldInfo> privateFields;
         private Dictionary<string, MethodInfo> privateMethods;
+        public Dictionary<int, Dictionary<string, string>> FlavorDictionary;
+        public Dictionary<int, Dictionary<string, string>> PromptDictionary;
     }
 }
