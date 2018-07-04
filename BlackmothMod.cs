@@ -161,6 +161,69 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
 
                 ["INV_NAME_SHADOWDASH"] = @"Blackmoth Cloak"
             };
+            Dictionary<string, string> rusUIDictionary = new Dictionary<string, string>
+            {
+                ["CHARM_DESC_13"] = @"Племя богомолов награждает подобными амулетами тех, кого они уважают.
+
+Весьма ощутимо увеличивает дальность рывка, позволяя достать противников с большого расстояния.",
+
+                ["CHARM_DESC_15"] = @"Создан из плащей поверженных воинов.
+            
+Увеличивает мощь рывка носителя, позволяя отбрасывать пораженных врагов назад с каждым ударом.",
+
+                ["CHARM_DESC_16"] = @"Заключает в себе запретное заклятье, превращающее носителя в пустоту.
+
+Во время рывка носитель может проходить сквозь твердые объекты.",
+
+                ["CHARM_DESC_18"] =
+    @"УДает носителю больше силы, увеличивая урон, наносимый рывком.
+
+Этот амулет очень хрупок и сломается при смерти владельца.",
+
+                ["CHARM_DESC_25_G"] =
+    @"Дает носителю больше силы, увеличивая урон, наносимый рывком.
+
+Этот амулет нельзя сломать.",
+
+                ["CHARM_DESC_31"] = $@"Очень похож на чудаковатого жука, известного лишь как  {"Трюкач"}.
+
+Носитель может чаще передвигаться рывками и даже делать рывок в воздухе. Отлично подходит для тех, кто хочет передвигаться быстрее.
+",
+
+                ["CHARM_DESC_32"] =
+    @"Создан из неблаговидных и забракованных плащей, сотканных воедино. Они все еще жаждут обрести хозяев.
+
+Позволяет чаще наносить удары рывком.",
+
+                ["CHARM_DESC_35"] =
+    @"Содержит в себе благодарность всех гусеничек, которым вы помогли перейти на следующую стадию жизни. Наполняет ваше оружие священной мощью.
+
+Позволяет носителю вознестись и стать легендарным Гусельком, и улететь в рай.",
+
+                ["CHARM_NAME_16"] = @"Тень Пустоты",
+
+                ["CHARM_NAME_18"] = @"Длинный рывок",
+
+                ["CHARM_NAME_32"] = @"Быстрый рывок",
+
+                ["CHARM_NAME_35"] = @"Элегия Гуселька",
+
+                ["INV_DESC_DASH"] =
+    @"Плащ с мотыльковой прострочкой. Позволяет носителю делать рывок в любую сторону.",
+
+                ["INV_DESC_SHADOWDASH"] =
+    @"Плащ, сделанный из субстанции Бездны, прародителя Черного Мотылька. Позволяет носителю получать ДУШУ и наносить двойной урон при рывке.",
+
+                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm")
+    ? @"Силовое ядро старого шахтерского голема, в которое вделан крепкий кристалл. Сила кристалла позволяет носящему нестись вперед с умопомрачительной скоростью.
+
+После уничтожения Кошмара кристалл раскрыл свой полный потенциал и дает носителю больше ловкости."
+    : @"Силовое ядро старого шахтерского голема, в которое вделан крепкий кристалл. Сила кристалла позволяет носящему нестись вперед с умопомрачительной скоростью.
+
+Несмотря на то, что кристалл довольно силен, Кошмар до сих пор не дает раскрыть его полный потенциал.",
+
+                ["INV_NAME_SHADOWDASH"] = @"Мантия Черного Мотылька"
+            };
             Dictionary<string, string> ptbrPromptDictionary = new Dictionary<string, string>
             {
                 ["NAILSMITH_UPGRADE_1"] = "Pagar Geo para fortalecer a esquiva?",
@@ -197,10 +260,30 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
 
                 ["GET_DASH_1"] = "while holding any direction to dash in that direction."
             };
+            Dictionary<string, string> rusPromptDictionary = new Dictionary<string, string>
+            {
+                ["NAILSMITH_UPGRADE_1"] = "Заплатить Гео, чтобы усилить рывок?",
+
+                ["NAILSMITH_UPGRADE_2"] = "Отдать одну Бледную руду и Гео для усиления рывка?",
+
+                ["NAILSMITH_UPGRADE_3"] = "Отдать две Бледные руды и Гео для усиления рывка?",
+
+                ["NAILSMITH_UPGRADE_4"] = "Отдать три Бледные руды и Гео для усиления рывка?",
+
+                ["GET_SHADOWDASH_2"] = "Используйте плащ, чтобы проходить через щели в реальности и получать ДУШУ с пространства внутри.",
+
+                ["GET_SHADOWDASH_1"] = "для рывка, пока получаете ДУШУ от окружения.",
+
+                ["GET_DASH_2"] = "Используйте плащ, чтобы делать рывок в любом направлении.",
+
+                ["GET_DASH_1"] = "пока держите кнопку любого направления для рывка в этом направлении."
+            };
             FlavorDictionary.Add(new KeyValuePair<int, string>(147, "UI"), ptbrUIDictionary);
-            FlavorDictionary.Add(new KeyValuePair<int, string>(147, "Prompts"), ptbrPromptDictionary);
             FlavorDictionary.Add(new KeyValuePair<int, string>(44, "UI"), enUIDictionary);
+            FlavorDictionary.Add(new KeyValuePair<int, string>(154, "UI"), rusUIDictionary);
+            FlavorDictionary.Add(new KeyValuePair<int, string>(147, "Prompts"), ptbrPromptDictionary);
             FlavorDictionary.Add(new KeyValuePair<int, string>(44, "Prompts"), enPromptDictionary);
+            FlavorDictionary.Add(new KeyValuePair<int, string>(154, "Prompts"), rusPromptDictionary);
             LogDebug("Finished initializing dictionaries.");
         }
 
