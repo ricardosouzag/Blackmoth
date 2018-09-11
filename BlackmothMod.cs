@@ -38,10 +38,47 @@ namespace BlackmothMod
             ModHooks.Instance.TakeDamageHook += InstanceOnTakeDamageHook;
             ModHooks.Instance.HitInstanceHook += SetDamages;
             On.HeroController.LookForQueueInput += HeroControllerOnLookForQueueInput;
+            On.HeroController.Move += Move;
 
             // Init dictionaries to stop nullRef.
             InitializeDictionaries();
             Instance.Log("Blackmoth initialized!");
+        }
+
+        private void Move(On.HeroController.orig_Move orig, HeroController self, float move_direction)
+        {
+            if (_origMove == null) _origMove = orig;
+            float speed = 30f / _hc.RUN_SPEED;
+            if (_superdashing)
+            {
+                _heroAnimator.Play("SD Dash");
+                HeroController.instance.AffectedByGravity(false);
+                _heroRigidbody2D.gravityScale = 0f;
+                Log($"Superdashing {InputGetDirection()}");
+                switch (InputGetDirection())
+                {
+                    case "Up":
+                        _heroRigidbody2D.velocity = new Vector2(0f, 30f);
+                        break;
+                    case "Down":
+                        _heroRigidbody2D.velocity = new Vector2(0f, -30f);
+                        break;
+                    case "None":
+                        orig(self, move_direction);
+                        break;
+                    case "Left":
+                        orig(self, -speed);
+                        break;
+                    case "Right":
+                        orig(self, speed);
+                        break;
+                }
+            }
+            else
+            {
+                Log("Vanilla move");
+                orig(self, move_direction);
+            }
         }
 
         #region Setting up player references for loading saves and creating new saves.
@@ -60,7 +97,9 @@ namespace BlackmothMod
         {
             while (HeroController.instance == null)
                 yield return new WaitForEndOfFrame();
-
+            
+            _hc = HeroController.instance;
+            
             if (_sharpShadow == null || !_sharpShadow.CompareTag("Sharp Shadow"))
             {
                 foreach (GameObject gameObject in Resources.FindObjectsOfTypeAll<GameObject>())
@@ -377,46 +416,60 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
                 CheckForDash();
             }
             
-            if (PlayerData.instance.GetBool("hasSuperDash") && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
+//            if (PlayerData.instance.GetBool("hasSuperDash") && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
+//            {
+//                AirSuperDash();
+//            }
+
+            if  (!_superdashing)
             {
-                AirSuperDash();
+                if (_heroActions.superDash.WasReleased)
+                {
+                    StartSuperdash();
+                }
+            }
+            else
+            {
+                if (_heroActions.superDash.WasReleased)
+                {
+                    StopSuperdash();
+                }
             }
 
-            switch (InputGetDirection())
-            {
-                    case "Up":
-                        Log("updash");
-                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-                        HeroController.instance.StartCoroutine(UpSuperDash());
-                        Log("updashed");
-                        break;
-                    case "Down":
-                        Log("downdash");
-                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
-                        HeroController.instance.StartCoroutine(DownSuperDash());
-                        break;
-                    case "Left":
-                        Log("leftdash");
-                        HeroController.instance.StartCoroutine(LeftSuperDash());
-                        break;
-                    case "Right":
-                        Log("rightdash");
-                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                        HeroController.instance.StartCoroutine(RightSuperDash());
-                        break;
-            }
+//            switch (InputGetDirection())
+//            {
+//                    case "Up":
+//                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+//                        HeroController.instance.StartCoroutine(UpSuperDash());
+//                        Log("updashed");
+//                        break;
+//                    case "Down":
+//                        Log("downdash");
+//                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
+//                        HeroController.instance.StartCoroutine(DownSuperDash());
+//                        break;
+//                    case "Left":
+//                        Log("leftdash");
+//                        HeroController.instance.StartCoroutine(LeftSuperDash());
+//                        break;
+//                    case "Right":
+//                        Log("rightdash");
+//                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+//                        HeroController.instance.StartCoroutine(RightSuperDash());
+//                        break;
+//            }
             
             orig(self);
         }
 
         private string InputGetDirection()
         {
-            if (_heroActions.up.IsPressed) return "Up";
-            if (_heroActions.down.IsPressed) return "Down";
-            if (_heroActions.left.IsPressed) return "Left";
-            if (_heroActions.right.IsPressed) return "Right";
-            
-            return "None";
+            if (_heroActions.up.IsPressed) _superdashDir = "Up";
+            else if (_heroActions.down.IsPressed) _superdashDir = "Down";
+            else if (_heroActions.left.IsPressed) _superdashDir = "Left";
+            else if (_heroActions.right.IsPressed) _superdashDir = "Right";
+
+            return _superdashDir;
         }
         
         private void Update()
@@ -808,10 +861,9 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             }
         }
 
-        private IEnumerator UpSuperDash()
+        private void StartSuperdash()
         {
-            Log("updashing");
-            _superdashSpeed = new Vector2(0f, 30f);
+            float speed = 30f / _hc.RUN_SPEED;
             
             _sdBurst.SetActive(true);
             _sdTrail.SetActive(true);
@@ -819,63 +871,32 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             _sdTrail.GetComponent<tk2dSpriteAnimator>().Play("SD Trail");
             _sdBurstGlow.SetActive(true);
             
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
-            
-            
-            while (_superdashSpeed.y > 0f)
+            switch (_hc.cState.facingRight)
             {
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
+                case false:
+                    _origMove(_hc, -speed);
+                    break;
+                case true:
+                    _origMove(_hc, speed);
+                    break;
             }
+
+            _superdashing = true;
+            Log("Set superdash to true");
         }
         
-        private IEnumerator DownSuperDash()
+        private void StopSuperdash()
         {
-            _superdashSpeed = new Vector2(0f, -30f);
+            _sdBurst.SetActive(false);
+            _sdTrail.SetActive(false);
+            _sdTrail.GetComponent<MeshRenderer>().enabled = false;
+            _sdTrail.GetComponent<tk2dSpriteAnimator>().Stop();
+            _sdBurstGlow.SetActive(false);
             
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
-            
-            while (_superdashSpeed.y < 0f)
-            {
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
-        }
-        
-        private IEnumerator LeftSuperDash()
-        {
-            _superdashSpeed = new Vector2(-30f, 0f);
-            
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
-            
-            while (_superdashSpeed.x < 0f)
-            {
-                HeroController.instance.cState.onGround = false;
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
-        }
-        
-        private IEnumerator RightSuperDash()
-        {
-            _superdashSpeed = new Vector2(30f, 0f);
-            
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
-            
-            while (_superdashSpeed.x > 0f)
-            {
-                HeroController.instance.cState.onGround = false;
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
+            HeroController.instance.AffectedByGravity(true);
+
+            _superdashing = false;
+            Log("Set superdash to false");
         }
 
         #endregion
@@ -966,6 +987,17 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             }
             _privateMethods[methodName]?.Invoke(HeroController.instance, new object[] { });
         }
+        
+        private MethodInfo GetPrivateMethod(string methodName)
+        {
+            if (!_privateMethods.ContainsKey(methodName))
+            {
+                _privateMethods.Add(methodName,
+                    HeroController.instance.GetType()
+                        .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance));
+            }
+            return _privateMethods[methodName];
+        }
 
         private Vector2 _dashDirection;
         private Vector2 _superdashSpeed;
@@ -989,12 +1021,15 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         private int _dashCount;
         private int _antiTurboDashFrames;
         public bool grubberOn;
-        bool _superDashing;
+        private bool _superdashing;
+        private string _superdashDir;       
         private HeroActions _heroActions;
         private Rigidbody2D _heroRigidbody2D;
         private Dictionary<string, FieldInfo> _privateFields;
         private Dictionary<string, MethodInfo> _privateMethods;
         private Dictionary<KeyValuePair<int, string>, Dictionary<string, string>> _flavorDictionary;
+        private HeroController _hc;
+        private On.HeroController.orig_Move _origMove;
 
         #endregion
     }
