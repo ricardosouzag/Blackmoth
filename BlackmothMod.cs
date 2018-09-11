@@ -451,7 +451,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
                         break;
                     case "Left":
                         Log("leftdash");
-                        Quaternion.Euler(0f, 0f, 180f);
+                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
                         HeroController.instance.StartCoroutine(LeftSuperDash());
                         break;
                     case "Right":
@@ -867,6 +867,8 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
 
         private void StartSuperdash()
         {
+            _superdashing = true;
+            
             float speed = 30f / _hc.RUN_SPEED;
             
             _sdBurst.SetActive(true);
@@ -878,19 +880,20 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             switch (_hc.cState.facingRight)
             {
                 case false:
-                    _origMove(_hc, -speed);
+                    HeroController.instance.StartCoroutine(LeftSuperDash());
                     break;
                 case true:
-                    _origMove(_hc, speed);
+                    HeroController.instance.StartCoroutine(RightSuperDash());
                     break;
             }
-
-            _superdashing = true;
+            
             Log("Set superdash to true");
         }
         
         private void StopSuperdash()
         {
+            _superdashing = false;
+            
             _sdBurst.SetActive(false);
             _sdTrail.SetActive(false);
             _sdTrail.GetComponent<MeshRenderer>().enabled = false;
@@ -898,17 +901,14 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             _sdBurstGlow.SetActive(false);
             
             HeroController.instance.AffectedByGravity(true);
-
-            _superdashing = false;
+            _heroRigidbody2D.gravityScale = (float)GetPrivateField("prevGravityScale").GetValue(_hc);
+            
             Log("Set superdash to false");
         }
         
         private IEnumerator UpSuperDash()
         {
             _superdashSpeed = new Vector2(0f, 30f);
-            
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
             
             
             while (_superdashSpeed.y > 0f)
@@ -923,9 +923,6 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         {
             _superdashSpeed = new Vector2(0f, -30f);
             
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
-            
             while (_superdashSpeed.y < 0f)
             {
                 _heroAnimator.Play("SD Dash");
@@ -937,9 +934,6 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         private IEnumerator LeftSuperDash()
         {
             _superdashSpeed = new Vector2(-30f, 0f);
-            
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
             
             while (_superdashSpeed.x < 0f)
             {
@@ -953,9 +947,6 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         private IEnumerator RightSuperDash()
         {
             _superdashSpeed = new Vector2(30f, 0f);
-            
-            HeroController.instance.AffectedByGravity(false);
-            _heroRigidbody2D.gravityScale = 0f;
             
             while (_superdashSpeed.x > 0f)
             {
