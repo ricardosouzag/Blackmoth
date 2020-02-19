@@ -18,7 +18,7 @@ namespace BlackmothMod
     {
         public static Blackmoth Instance;
 
-        public override string GetVersion() => "1.8.0";
+        public override string GetVersion() => "2.0.0";
 
         public override void Initialize()
         {
@@ -36,51 +36,12 @@ namespace BlackmothMod
             ModHooks.Instance.DashVectorHook += CalculateDashVelocity;
             ModHooks.Instance.DashPressedHook += CheckForDash;
             ModHooks.Instance.TakeDamageHook += InstanceOnTakeDamageHook;
-            ModHooks.Instance.HitInstanceHook += SetDamages;
             On.HeroController.LookForQueueInput += HeroControllerOnLookForQueueInput;
-            On.HeroController.Move += Move;
+            On.HealthManager.TakeDamage += SetDamages;
 
             // Init dictionaries to stop nullRef.
             InitializeDictionaries();
             Instance.Log("Blackmoth initialized!");
-        }
-
-        private void Move(On.HeroController.orig_Move orig, HeroController self, float move_direction)
-        {
-            if (_origMove == null) _origMove = orig;
-            float speed = 30f / _hc.RUN_SPEED;
-//            if (_superdashing)
-//            {
-//                _heroAnimator.Play("SD Dash");
-//                HeroController.instance.AffectedByGravity(false);
-//                _heroRigidbody2D.gravityScale = 0f;
-//                Log($"Superdashing {InputGetDirection()}");
-//                switch (InputGetDirection())
-//                {
-//                    case "Up":
-//                        _heroRigidbody2D.velocity = new Vector2(0f, 30f);
-//                        break;
-//                    case "Down":
-//                        _heroRigidbody2D.velocity = new Vector2(0f, -30f);
-//                        break;
-//                    case "None":
-//                        orig(self, move_direction);
-//                        break;
-//                    case "Left":
-//                        orig(self, -speed);
-//                        break;
-//                    case "Right":
-//                        orig(self, speed);
-//                        break;
-//                        
-//                }
-//            }
-//            else
-//            {
-//                Log("Vanilla move");
-            if (_superdashing) return;
-                orig(self, move_direction);
-//            }
         }
 
         #region Setting up player references for loading saves and creating new saves.
@@ -114,297 +75,12 @@ namespace BlackmothMod
                     }
                 }
             }
-
-            if (_superDash == null)
-            {
-                _superDash = HeroController.instance.superDash;
-                foreach (FsmGameObject fsmGameObject in _superDash.FsmVariables.GameObjectVariables)
-                {
-                    switch (fsmGameObject.Name)
-                    {
-                        case "SD Burst":
-                            _sdBurst = fsmGameObject.Value;
-                            break;
-                        case "Trail Effect":
-                            _sdTrail = fsmGameObject.Value;
-                            break;
-                        case "SD Burst Glow":
-                            _sdBurstGlow = fsmGameObject.Value;
-                            break;
-                    }
-                }
-            }
             
             if (_heroRigidbody2D == null) _heroRigidbody2D = HeroController.instance.GetComponent<Rigidbody2D>();
 
             if (_heroAnimator == null) _heroAnimator = HeroController.instance.GetComponent<tk2dSpriteAnimator>();
 
             if(_heroActions == null) _heroActions = GameManager.instance.inputHandler.inputActions;
-            
-            _gravity = _heroRigidbody2D.gravityScale;
-        }
-
-        #endregion
-
-        #region Handling the in-game descriptions.
-
-        private void InitializeDictionaries()
-        {
-            LogDebug("Initializing dictionaries.");
-            _privateFields = new Dictionary<string, FieldInfo>();
-            _privateMethods = new Dictionary<string, MethodInfo>();
-            _flavorDictionary = new Dictionary<KeyValuePair<int, string>, Dictionary<string, string>>();
-            Dictionary<string, string> ptbrUIDictionary = new Dictionary<string, string>
-            {
-                ["CHARM_DESC_13"] = @"Dado livremente pela Tribo dos Louva-deuses àqueles dignos de respeito.
-
-Aumenta consideravelmente o alcance da esquiva do portador, permitindo-o atacar inimigos mais distantes.",
-
-                ["CHARM_DESC_15"] = @"Formado de mantos de guerreiros caídos.
-                            
-Aumenta a força da esquiva do portador, fazendo inimigos recuarem mais quando atacados.",
-
-                ["CHARM_DESC_16"] = @"Contém um feitiço proibido que transforma matéria em vazio.
-
-Enquanto usa a esquiva, o corpo do portador poderá ir através de objetos sólidos.",
-
-                ["CHARM_DESC_18"] = @"Aumenta o alcance da esquiva do portador, permitindo-o atacar inimigos mais de longe.",
-
-                ["CHARM_DESC_25"] = @"Fortalece o portador, aumentando o dano que ele causa aos inimigos com sua esquiva.
-
-Esse amuleto é frágil e quebrará se o portador for morto",
-
-                ["CHARM_DESC_25_G"] = @"Fortalece o portador, aumentando o dano que ele causa nos inimigos com sua esquiva.
-
-Esse amuleto é inquebrável.",
-
-                ["CHARM_DESC_31"] = $@"Tem a semelhança de um inseto excêntrico conhecido apenas como {"O Mestre da Esquiva"}.
-
-O portador será capaz de se esquivar mais, bem como esquivar-se em pleno ar. Perfeito para aqueles que querem se mover o mais rápido possível.",
-
-                ["CHARM_DESC_32"] = @"Nascido de mantos descartados e imperfeitos que se uniram. Esses mantos ainda anseiam ser usados.
-
-Permite o portador a golpear muito mais rapidamente com sua esquiva.",
-
-                ["CHARM_DESC_35"] = @"Contém a gratidão de larvas que vão se mover para o próximo estágio de suas vidas. Confere uma força sagrada.
-
-Permite ao portador ascender e se tornar o lendário Grubbermoth e voar pelos céus.",
-
-                ["CHARM_NAME_16"] = @"Sombra do Vazio",
-
-                ["CHARM_NAME_18"] = @"Esquiva Longa",
-
-                ["CHARM_NAME_32"] = @"Esquiva Veloz",
-
-                ["CHARM_NAME_35"] = @"Elegia do Grubbermoth.",
-
-                ["INV_DESC_DASH"] = @"Manto feito com asas de mariposa. Permite ao usuário a esquivar-se em todas as direções.",
-
-                ["INV_DESC_SHADOWDASH"] = @"Capa formada da substância do Abismo, o progenitor do Blackmoth. Permite ao usuário a ganhar ALMA e dar o dobro do dano enquanto se esquiva.",
-
-                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm") ? @"O núcleo de energia de um velho golem minerador enfeitado de um potente cristal. A energia pode ser usada para lançar o portador pra frente em velocidades perigosas.
-
-Com o Pesadelo derrotado, o cristal revelou seu verdadeiro potencial, conferindo ao portador mais flexibilidade." : @"O núcleo de energia de um velho golem minerador enfeitado de um potente cristal. A energia pode ser usada para lançar o portador pra frente em velocidades perigosas.
-
-Mesmo que seja bem poderoso, parece que um Pesadelo o impede de revelar seu verdadeiro potencial...",
-
-                ["INV_NAME_SHADOWDASH"] = @"Manto de Blackmoth"
-            };
-            Dictionary<string, string> enUIDictionary = new Dictionary<string, string>
-            {
-                ["CHARM_DESC_13"] = @"Freely given by the Mantis Tribe to those they respect.
-
-Greatly increases the range of the bearer's dash, allowing them to strike foes from further away.",
-
-                ["CHARM_DESC_15"] = @"Formed from the cloaks of fallen warriors.
-                            
-Increases the force of the bearer's dash, causing enemies to recoil further when hit.",
-
-                ["CHARM_DESC_16"] = @"Contains a forbidden spell that transforms matter into void.
-
-When dashing, the bearer's body will be able to go through solid objects.",
-
-                ["CHARM_DESC_18"] =
-                    @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
-
-This charm is fragile, and will break if its bearer is killed.",
-
-                ["CHARM_DESC_25_G"] =
-                    @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
-
-This charm is ubreakable.",
-
-                ["CHARM_DESC_31"] = $@"Bears the likeness of an eccentric bug known only as {"The Dashmaster"}.
-
-The bearer will be able to dash more often as well as dash in midair. Perfect for those who want to move around as quickly as possible.",
-
-                ["CHARM_DESC_32"] =
-                    @"Born from imperfect, discarded cloaks that have fused together. The cloaks still long to be worn.
-
-Allows the bearer to slash much more rapidly with their dash.",
-
-                ["CHARM_DESC_35"] =
-                    @"Contains the gratitude of grubs who will move to the next stage of their lives. Imbues weapons with a holy strength.
-
-Allows bearer to ascend and become the legendary Grubbermoth and fly away to the heavens.",
-
-                ["CHARM_NAME_16"] = @"Void Shade",
-
-                ["CHARM_NAME_18"] = @"Longdash",
-
-                ["CHARM_NAME_32"] = @"Quick Dash",
-
-                ["CHARM_NAME_35"] = @"Grubbermoth's Elegy",
-
-                ["INV_DESC_DASH"] =
-                    @"Cloak threaded with mothwing strands. Allows the wearer to dash in every direction.",
-
-                ["INV_DESC_SHADOWDASH"] =
-                    @"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain SOUL and deal double damage while dashing.",
-
-                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm")
-                    ? @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
-
-With the Nightmare defeated, the crystal has revealed its true potential, granting its wielder more flexibility."
-                    : @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
-
-Even though it's quite powerful, it seems as if a Nightmare is preventing it from unleashing its true potential...",
-
-                ["INV_NAME_SHADOWDASH"] = @"Blackmoth Cloak"
-            };
-            Dictionary<string, string> rusUIDictionary = new Dictionary<string, string>
-            {
-                ["CHARM_DESC_13"] = @"Племя богомолов награждает подобными амулетами тех, кого они уважают.
-
-Весьма ощутимо увеличивает дальность рывка, позволяя достать противников с большого расстояния.",
-
-                ["CHARM_DESC_15"] = @"Создан из плащей поверженных воинов.
-            
-Увеличивает мощь рывка носителя, позволяя отбрасывать пораженных врагов назад с каждым ударом.",
-
-                ["CHARM_DESC_16"] = @"Заключает в себе запретное заклятье, превращающее носителя в пустоту.
-
-Во время рывка носитель может проходить сквозь твердые объекты.",
-
-                ["CHARM_DESC_18"] =
-                    @"УДает носителю больше силы, увеличивая урон, наносимый рывком.
-
-Этот амулет очень хрупок и сломается при смерти владельца.",
-
-                ["CHARM_DESC_25_G"] =
-                    @"Дает носителю больше силы, увеличивая урон, наносимый рывком.
-
-Этот амулет нельзя сломать.",
-
-                ["CHARM_DESC_31"] = $@"Очень похож на чудаковатого жука, известного лишь как  {"Трюкач"}.
-
-Носитель может чаще передвигаться рывками и даже делать рывок в воздухе. Отлично подходит для тех, кто хочет передвигаться быстрее.
-",
-
-                ["CHARM_DESC_32"] =
-                    @"Создан из неблаговидных и забракованных плащей, сотканных воедино. Они все еще жаждут обрести хозяев.
-
-Позволяет чаще наносить удары рывком.",
-
-                ["CHARM_DESC_35"] =
-                    @"Содержит в себе благодарность всех гусеничек, которым вы помогли перейти на следующую стадию жизни. Наполняет ваше оружие священной мощью.
-
-Позволяет носителю вознестись и стать легендарным Гусельком, и улететь в рай.",
-
-                ["CHARM_NAME_16"] = @"Тень Пустоты",
-
-                ["CHARM_NAME_18"] = @"Длинный рывок",
-
-                ["CHARM_NAME_32"] = @"Быстрый рывок",
-
-                ["CHARM_NAME_35"] = @"Элегия Гуселька",
-
-                ["INV_DESC_DASH"] =
-                    @"Плащ с мотыльковой прострочкой. Позволяет носителю делать рывок в любую сторону.",
-
-                ["INV_DESC_SHADOWDASH"] =
-                    @"Плащ, сделанный из субстанции Бездны, прародителя Черного Мотылька. Позволяет носителю получать ДУШУ и наносить двойной урон при рывке.",
-
-                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm")
-                    ? @"Силовое ядро старого шахтерского голема, в которое вделан крепкий кристалл. Сила кристалла позволяет носящему нестись вперед с умопомрачительной скоростью.
-
-После уничтожения Кошмара кристалл раскрыл свой полный потенциал и дает носителю больше ловкости."
-                    : @"Силовое ядро старого шахтерского голема, в которое вделан крепкий кристалл. Сила кристалла позволяет носящему нестись вперед с умопомрачительной скоростью.
-
-Несмотря на то, что кристалл довольно силен, Кошмар до сих пор не дает раскрыть его полный потенциал.",
-
-                ["INV_NAME_SHADOWDASH"] = @"Мантия Черного Мотылька"
-            };
-            Dictionary<string, string> ptbrPromptDictionary = new Dictionary<string, string>
-            {
-                ["NAILSMITH_UPGRADE_1"] = "Pagar Geo para fortalecer a esquiva?",
-
-                ["NAILSMITH_UPGRADE_2"] = "Dar Minério Pálido e Geo para fortalecer a esquiva?",
-
-                ["NAILSMITH_UPGRADE_3"] = "Dar doi Minérios Pálido e Geo para fortalecer a esquiva?",
-
-                ["NAILSMITH_UPGRADE_4"] = "Dar trê Minérios Pálido e Geo para fortalecer a esquiva?",
-
-                ["GET_SHADOWDASH_2"] = "Use o manto para atravessar as costuras na realidade e pegar ALMA do espaço intermediário.",
-
-                ["GET_SHADOWDASH_1"] = "para se esquivar enquanto coleta ALMA do ambiente.",
-
-                ["GET_DASH_2"] = "Use o manto para esquivar-se rapidamente através do ar em todas as direções.",
-
-                ["GET_DASH_1"] = "e qualquer direção para esquivar-se naquela direção."
-            };
-            Dictionary<string, string> enPromptDictionary = new Dictionary<string, string>
-            {
-                ["NAILSMITH_UPGRADE_1"] = "Pay Geo to strengthen dash?",
-
-                ["NAILSMITH_UPGRADE_2"] = "Give Pale Ore and Geo to strengthen dash?",
-
-                ["NAILSMITH_UPGRADE_3"] = "Give two Pale Ore and Geo to strengthen dash?",
-
-                ["NAILSMITH_UPGRADE_4"] = "Give three Pale Ore and Geo to strengthen dash?",
-
-                ["GET_SHADOWDASH_2"] = "Use the cloak to dash through the seams in reality and gather SOUL from the space in-between.",
-
-                ["GET_SHADOWDASH_1"] = "to dash while gathering SOUL from the environment.",
-
-                ["GET_DASH_2"] = "Use the cloak to dash quickly through the air in all directions.",
-
-                ["GET_DASH_1"] = "while holding any direction to dash in that direction."
-            };
-            Dictionary<string, string> rusPromptDictionary = new Dictionary<string, string>
-            {
-                ["NAILSMITH_UPGRADE_1"] = "Заплатить Гео, чтобы усилить рывок?",
-
-                ["NAILSMITH_UPGRADE_2"] = "Отдать одну Бледную руду и Гео для усиления рывка?",
-
-                ["NAILSMITH_UPGRADE_3"] = "Отдать две Бледные руды и Гео для усиления рывка?",
-
-                ["NAILSMITH_UPGRADE_4"] = "Отдать три Бледные руды и Гео для усиления рывка?",
-
-                ["GET_SHADOWDASH_2"] = "Используйте плащ, чтобы проходить через щели в реальности и получать ДУШУ с пространства внутри.",
-
-                ["GET_SHADOWDASH_1"] = "для рывка, пока получаете ДУШУ от окружения.",
-
-                ["GET_DASH_2"] = "Используйте плащ, чтобы делать рывок в любом направлении.",
-
-                ["GET_DASH_1"] = "пока держите кнопку любого направления для рывка в этом направлении."
-            };
-            _flavorDictionary.Add(new KeyValuePair<int, string>(147, "UI"), ptbrUIDictionary);
-            _flavorDictionary.Add(new KeyValuePair<int, string>(44, "UI"), enUIDictionary);
-            _flavorDictionary.Add(new KeyValuePair<int, string>(154, "UI"), rusUIDictionary);
-            _flavorDictionary.Add(new KeyValuePair<int, string>(147, "Prompts"), ptbrPromptDictionary);
-            _flavorDictionary.Add(new KeyValuePair<int, string>(44, "Prompts"), enPromptDictionary);
-            _flavorDictionary.Add(new KeyValuePair<int, string>(154, "Prompts"), rusPromptDictionary);
-            LogDebug("Finished initializing dictionaries.");
-        }
-        
-        string Descriptions(string key, string sheet)
-        {
-            string ret = Language.Language.GetInternal(key, sheet);
-            int lang = (int)Language.Language.CurrentLanguage();
-            KeyValuePair<int, string> langSheet = new KeyValuePair<int, string>(lang, sheet);
-            if (!_flavorDictionary.ContainsKey(langSheet)) return ret;
-            return _flavorDictionary[langSheet].ContainsKey(key) ? _flavorDictionary[langSheet][key] : ret;
         }
 
         #endregion
@@ -417,63 +93,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             {
                 CheckForDash();
             }
-            
-//            if (PlayerData.instance.GetBool("hasSuperDash") && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
-//            {
-//                AirSuperDash();
-//            }
-
-            if (_heroActions.superDash.WasReleased)
-            {
-                if (!_superdashing)
-                {
-                    StartSuperdash();
-                }
-                else
-                {
-                    StopSuperdash();
-                }
-            }
-            
-            if (_superdashing)
-            {
-                switch (InputGetDirection())
-                {
-                    case "Up":
-                        Log("updash");
-                        _heroRigidbody2D.transform.localRotation = _hc.cState.facingRight ? Quaternion.Euler(0f, 0f, 90f) : Quaternion.Euler(0f, 0f, -90f);
-                        HeroController.instance.StartCoroutine(UpSuperDash()); 
-                        break;
-                    case "Down":
-                        Log("downdash");
-                        _heroRigidbody2D.transform.localRotation = _hc.cState.facingRight ? Quaternion.Euler(0f, 0f, -90f) : Quaternion.Euler(0f, 0f, 90f);
-                        HeroController.instance.StartCoroutine(DownSuperDash());
-                        break;
-                    case "Left":
-                        Log("leftdash");
-                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                        HeroController.instance.StartCoroutine(LeftSuperDash());
-                        break;
-                    case "Right":
-                        Log("rightdash");
-                        _heroRigidbody2D.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                        HeroController.instance.StartCoroutine(RightSuperDash());
-                        break;
-                }
-            }
-            
             orig(self);
-        }
-
-        private string InputGetDirection()
-        {
-            if (_heroActions.up.IsPressed) _superdashDir = "Up";
-            else if (_heroActions.down.IsPressed) _superdashDir = "Down";
-            else if (_heroActions.left.IsPressed) _superdashDir = "Left";
-            else if (_heroActions.right.IsPressed) _superdashDir = "Right";
-            else _superdashDir = "None";
-
-            return _superdashDir;
         }
         
         private void Update()
@@ -823,162 +443,12 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
 
         #endregion
 
-        #region Handling the superdash mechanic.
-
-        void AirSuperDash()
-        {
-            if (GameManager.instance.inputHandler.inputActions.superDash.IsPressed)
-            {
-                foreach (FsmState state in _superDash.FsmStates)
-                {
-                    if (state.Name == "Inactive")
-                    {
-                        state.Transitions[0].ToState = "Relinquish Control";
-                    }
-                    if (state.Name == "Relinquish Control")
-                    {
-                        if (PlayerData.instance.killedNightmareGrimm)
-                        {
-                            if (HeroController.instance.cState.wallSliding)
-                            {
-                                state.Transitions[0].ToState = "Wall Charged";
-                                break;
-                            }
-
-                            state.Transitions[0].ToState = "Ground Charged";
-                            break;
-                        }
-
-                        if (HeroController.instance.cState.wallSliding)
-                        {
-                            state.Transitions[0].ToState = "Wall Charge";
-                            break;
-                        }
-
-                        if (HeroController.instance.cState.onGround)
-                        {
-                            state.Transitions[0].ToState = "Ground Charge";
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        private void StartSuperdash()
-        {
-            _superdashing = true;
-            
-            float speed = 30f / _hc.RUN_SPEED;
-            
-            _sdBurst.SetActive(true);
-            _sdTrail.SetActive(true);
-            _sdTrail.GetComponent<MeshRenderer>().enabled = true;
-            _sdTrail.GetComponent<tk2dSpriteAnimator>().Play("SD Trail");
-            _sdBurstGlow.SetActive(true);
-            
-            switch (_hc.cState.facingRight)
-            {
-                case false:
-                    HeroController.instance.StartCoroutine(LeftSuperDash());
-                    break;
-                case true:
-                    HeroController.instance.StartCoroutine(RightSuperDash());
-                    break;
-            }
-            
-            Log("Set superdash to true");
-        }
-        
-        private void StopSuperdash()
-        {
-            _superdashing = false;
-            
-            _sdBurst.SetActive(false);
-            _sdTrail.SetActive(false);
-            _sdTrail.GetComponent<MeshRenderer>().enabled = false;
-            _sdTrail.GetComponent<tk2dSpriteAnimator>().Stop();
-            _sdBurstGlow.SetActive(false);
-            
-            HeroController.instance.AffectedByGravity(true);
-            _heroRigidbody2D.gravityScale = (float)GetPrivateField("prevGravityScale").GetValue(_hc);
-            
-            Log("Set superdash to false");
-        }
-        
-        private IEnumerator UpSuperDash()
-        {
-            _superdashSpeed = new Vector2(0f, 30f);
-            
-            
-            while (_superdashSpeed.y > 0f)
-            {
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
-        }
-        
-        private IEnumerator DownSuperDash()
-        {
-            _superdashSpeed = new Vector2(0f, -30f);
-            
-            while (_superdashSpeed.y < 0f)
-            {
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
-        }
-        
-        private IEnumerator LeftSuperDash()
-        {
-            _superdashSpeed = new Vector2(-30f, 0f);
-            
-            while (_superdashSpeed.x < 0f)
-            {
-                HeroController.instance.cState.onGround = false;
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
-        }
-        
-        private IEnumerator RightSuperDash()
-        {
-            _superdashSpeed = new Vector2(30f, 0f);
-            
-            while (_superdashSpeed.x > 0f)
-            {
-                HeroController.instance.cState.onGround = false;
-                _heroAnimator.Play("SD Dash");
-                _heroRigidbody2D.velocity = _superdashSpeed;
-                yield return null;
-            }
-        }
-
-        #endregion
-
         #region Handling dealing and receiving damage.
-
-        private int InstanceOnTakeDamageHook(ref int hazardtype, int damage)
+        
+        private void SetDamages(On.HealthManager.orig_TakeDamage orig, HealthManager owner, HitInstance 
+            hit)
         {
-            if (hazardtype != (int) HazardType.SPIKES || HeroController.instance.cState.invulnerable) return damage;
-            
-            if (grubberOn) return 0;
-            
-            if (_hitStun > 0)
-            {
-                return 0;
-            }
-
-            _hitStun = 1.5f;
-            return damage;
-        }
-
-        private HitInstance SetDamages(Fsm owner, HitInstance hit)
-        {
-            LogDebug($@"Creating HitInstance for {owner.Owner}");
+            Log($@"Creating HitInstance {hit.AttackType}, {hit.Source}, {hit.DamageDealt}, {hit.Multiplier} for {owner.name}");
             _dashDamage = 5 + PlayerData.instance.GetInt("nailSmithUpgrades") * 4;
             float multiplier = 1;
             if (PlayerData.instance.GetBool("hasShadowDash"))
@@ -995,29 +465,41 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
             }
             if (_oldDashDamage != _dashDamage)
             {
-                Log($@"[Blackmoth] Sharp Shadow Damage set to {_dashDamage}");
+                LogDebug($@"[Blackmoth] Sharp Shadow Damage set to {_dashDamage}");
                 _oldDashDamage = _dashDamage;
             }
-            if (_sharpShadow != null && owner.GameObject == _sharpShadow)
+            if (hit.AttackType == AttackTypes.SharpShadow || hit.Source.name == "SuperDash Damage" && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
             {
-                LogDebug($@"Setting damage for {owner.GameObject.name}");
+                LogDebug($@"Setting damage for {owner.name}");
                 hit.DamageDealt = _dashDamage;
                 hit.AttackType = 0;
                 hit.Multiplier = multiplier;
                 hit.Direction = HeroController.instance.cState.facingRight ? 0 : 180;
                 hit.MagnitudeMultiplier = PlayerData.instance.GetBool("equippedCharm_15") ? 2f : 0f;
             }
-            else if (owner.GameObject.name.Contains("Slash"))
+            else if (hit.AttackType == AttackTypes.Nail)
             {
-                LogDebug($@"Setting damage for {owner.GameObject.name}");
+                LogDebug($@"Setting damage for {owner.name}");
                 hit.DamageDealt = 1;
             }
-            else if (owner.GameObject.name == _superDash.gameObject.name && PlayerData.instance.GetBool("defeatedNightmareGrimm"))
+            LogDebug($@"Creating HitInstance {hit.AttackType}, {hit.Source}, {hit.DamageDealt}, {hit.Multiplier} for 
+            {owner.name}");
+            orig(owner, hit);
+        }
+
+        private int InstanceOnTakeDamageHook(ref int hazardtype, int damage)
+        {
+            if (hazardtype != (int) HazardType.SPIKES || HeroController.instance.cState.invulnerable) return damage;
+            
+            if (grubberOn) return 0;
+            
+            if (_hitStun > 0)
             {
-                LogDebug($@"Setting damage for {owner.GameObject.name}");
-                hit.DamageDealt = _dashDamage;
+                return 0;
             }
-            return hit;
+
+            _hitStun = 1.5f;
+            return damage;
         }
 
         #endregion
@@ -1058,12 +540,7 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         }
 
         private Vector2 _dashDirection;
-        private Vector2 _superdashSpeed;
         private GameObject _sharpShadow;
-        private GameObject _sdBurst;
-        private GameObject _sdTrail;
-        private GameObject _sdBurstGlow;
-        private PlayMakerFSM _superDash;
         private PlayMakerFSM _sharpShadowFsm;
         private tk2dSpriteAnimator _heroAnimator;
         private int _oldDashDamage;
@@ -1075,19 +552,278 @@ Even though it's quite powerful, it seems as if a Nightmare is preventing it fro
         private float _dashInvulTimer;
         private float _sharpShadowVolume;
         private float _hitStun;
-        private float _gravity;
         private int _dashCount;
         private int _antiTurboDashFrames;
-        public bool grubberOn;
-        private bool _superdashing;
-        private string _superdashDir;       
+        public bool grubberOn;    
         private HeroActions _heroActions;
         private Rigidbody2D _heroRigidbody2D;
         private Dictionary<string, FieldInfo> _privateFields;
         private Dictionary<string, MethodInfo> _privateMethods;
         private Dictionary<KeyValuePair<int, string>, Dictionary<string, string>> _flavorDictionary;
         private HeroController _hc;
-        private On.HeroController.orig_Move _origMove;
+
+        #endregion
+        
+        #region Handling the in-game descriptions.
+
+        private void InitializeDictionaries()
+        {
+            LogDebug("Initializing dictionaries.");
+            _privateFields = new Dictionary<string, FieldInfo>();
+            _privateMethods = new Dictionary<string, MethodInfo>();
+            _flavorDictionary = new Dictionary<KeyValuePair<int, string>, Dictionary<string, string>>();
+            Dictionary<string, string> ptbrUIDictionary = new Dictionary<string, string>
+            {
+                ["CHARM_DESC_13"] = @"Dado livremente pela Tribo dos Louva-deuses àqueles dignos de respeito.
+
+Aumenta consideravelmente o alcance da esquiva do portador, permitindo-o atacar inimigos mais distantes.",
+
+                ["CHARM_DESC_15"] = @"Formado de mantos de guerreiros caídos.
+                            
+Aumenta a força da esquiva do portador, fazendo inimigos recuarem mais quando atacados.",
+
+                ["CHARM_DESC_16"] = @"Contém um feitiço proibido que transforma matéria em vazio.
+
+Enquanto usa a esquiva, o corpo do portador poderá ir através de objetos sólidos.",
+
+                ["CHARM_DESC_18"] = @"Aumenta o alcance da esquiva do portador, permitindo-o atacar inimigos mais de longe.",
+
+                ["CHARM_DESC_25"] = @"Fortalece o portador, aumentando o dano que ele causa aos inimigos com sua esquiva.
+
+Esse amuleto é frágil e quebrará se o portador for morto",
+
+                ["CHARM_DESC_25_G"] = @"Fortalece o portador, aumentando o dano que ele causa nos inimigos com sua esquiva.
+
+Esse amuleto é inquebrável.",
+
+                ["CHARM_DESC_31"] = $@"Tem a semelhança de um inseto excêntrico conhecido apenas como {"O Mestre da Esquiva"}.
+
+O portador será capaz de se esquivar mais, bem como esquivar-se em pleno ar. Perfeito para aqueles que querem se mover o mais rápido possível.",
+
+                ["CHARM_DESC_32"] = @"Nascido de mantos descartados e imperfeitos que se uniram. Esses mantos ainda anseiam ser usados.
+
+Permite o portador a golpear muito mais rapidamente com sua esquiva.",
+
+                ["CHARM_DESC_35"] = @"Contém a gratidão de larvas que vão se mover para o próximo estágio de suas vidas. Confere uma força sagrada.
+
+Permite ao portador ascender e se tornar o lendário Grubbermoth e voar pelos céus.",
+
+                ["CHARM_NAME_16"] = @"Sombra do Vazio",
+
+                ["CHARM_NAME_18"] = @"Esquiva Longa",
+
+                ["CHARM_NAME_32"] = @"Esquiva Veloz",
+
+                ["CHARM_NAME_35"] = @"Elegia do Grubbermoth.",
+
+                ["INV_DESC_DASH"] = @"Manto feito com asas de mariposa. Permite ao usuário a esquivar-se em todas as direções.",
+
+                ["INV_DESC_SHADOWDASH"] = @"Capa formada da substância do Abismo, o progenitor do Blackmoth. Permite ao usuário a ganhar ALMA e dar o dobro do dano enquanto se esquiva.",
+
+                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm") ? @"O núcleo de energia de um velho golem minerador enfeitado de um potente cristal. A energia pode ser usada para lançar o portador pra frente em velocidades perigosas.
+
+Com o Pesadelo derrotado, o cristal revelou seu verdadeiro potencial, conferindo ao portador mais flexibilidade." : @"O núcleo de energia de um velho golem minerador enfeitado de um potente cristal. A energia pode ser usada para lançar o portador pra frente em velocidades perigosas.
+
+Mesmo que seja bem poderoso, parece que um Pesadelo o impede de revelar seu verdadeiro potencial...",
+
+                ["INV_NAME_SHADOWDASH"] = @"Manto de Blackmoth"
+            };
+            Dictionary<string, string> enUIDictionary = new Dictionary<string, string>
+            {
+                ["CHARM_DESC_13"] = @"Freely given by the Mantis Tribe to those they respect.
+
+Greatly increases the range of the bearer's dash, allowing them to strike foes from further away.",
+
+                ["CHARM_DESC_15"] = @"Formed from the cloaks of fallen warriors.
+                            
+Increases the force of the bearer's dash, causing enemies to recoil further when hit.",
+
+                ["CHARM_DESC_16"] = @"Contains a forbidden spell that transforms matter into void.
+
+When dashing, the bearer's body will be able to go through solid objects.",
+
+                ["CHARM_DESC_18"] =
+                    @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
+
+This charm is fragile, and will break if its bearer is killed.",
+
+                ["CHARM_DESC_25_G"] =
+                    @"Strengthens the bearer, increasing the damage they deal to enemies with their dash.
+
+This charm is ubreakable.",
+
+                ["CHARM_DESC_31"] = $@"Bears the likeness of an eccentric bug known only as {"The Dashmaster"}.
+
+The bearer will be able to dash more often as well as dash in midair. Perfect for those who want to move around as quickly as possible.",
+
+                ["CHARM_DESC_32"] =
+                    @"Born from imperfect, discarded cloaks that have fused together. The cloaks still long to be worn.
+
+Allows the bearer to slash much more rapidly with their dash.",
+
+                ["CHARM_DESC_35"] =
+                    @"Contains the gratitude of grubs who will move to the next stage of their lives. Imbues weapons with a holy strength.
+
+Allows bearer to ascend and become the legendary Grubbermoth and fly away to the heavens.",
+
+                ["CHARM_NAME_16"] = @"Void Shade",
+
+                ["CHARM_NAME_18"] = @"Longdash",
+
+                ["CHARM_NAME_32"] = @"Quick Dash",
+
+                ["CHARM_NAME_35"] = @"Grubbermoth's Elegy",
+
+                ["INV_DESC_DASH"] =
+                    @"Cloak threaded with mothwing strands. Allows the wearer to dash in every direction.",
+
+                ["INV_DESC_SHADOWDASH"] =
+                    @"Cloak formed from the substance of the Abyss, the progenitor of the Blackmoth. Allows the wearer to gain SOUL and deal double damage while dashing.",
+
+                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm")
+                    ? @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+
+With the Nightmare defeated, the crystal has revealed its true potential, granting its wielder more flexibility."
+                    : @"The energy core of an old mining golem, fashioned around a potent crystal. The crystal's energy can be channeled to launch the bearer forward at dangerous speeds.
+
+Even though it's quite powerful, it seems as if a Nightmare is preventing it from unleashing its true potential...",
+
+                ["INV_NAME_SHADOWDASH"] = @"Blackmoth Cloak"
+            };
+            Dictionary<string, string> rusUIDictionary = new Dictionary<string, string>
+            {
+                ["CHARM_DESC_13"] = @"Племя богомолов награждает подобными амулетами тех, кого они уважают.
+
+Весьма ощутимо увеличивает дальность рывка, позволяя достать противников с большого расстояния.",
+
+                ["CHARM_DESC_15"] = @"Создан из плащей поверженных воинов.
+            
+Увеличивает мощь рывка носителя, позволяя отбрасывать пораженных врагов назад с каждым ударом.",
+
+                ["CHARM_DESC_16"] = @"Заключает в себе запретное заклятье, превращающее носителя в пустоту.
+
+Во время рывка носитель может проходить сквозь твердые объекты.",
+
+                ["CHARM_DESC_18"] =
+                    @"УДает носителю больше силы, увеличивая урон, наносимый рывком.
+
+Этот амулет очень хрупок и сломается при смерти владельца.",
+
+                ["CHARM_DESC_25_G"] =
+                    @"Дает носителю больше силы, увеличивая урон, наносимый рывком.
+
+Этот амулет нельзя сломать.",
+
+                ["CHARM_DESC_31"] = $@"Очень похож на чудаковатого жука, известного лишь как  {"Трюкач"}.
+
+Носитель может чаще передвигаться рывками и даже делать рывок в воздухе. Отлично подходит для тех, кто хочет передвигаться быстрее.
+",
+
+                ["CHARM_DESC_32"] =
+                    @"Создан из неблаговидных и забракованных плащей, сотканных воедино. Они все еще жаждут обрести хозяев.
+
+Позволяет чаще наносить удары рывком.",
+
+                ["CHARM_DESC_35"] =
+                    @"Содержит в себе благодарность всех гусеничек, которым вы помогли перейти на следующую стадию жизни. Наполняет ваше оружие священной мощью.
+
+Позволяет носителю вознестись и стать легендарным Гусельком, и улететь в рай.",
+
+                ["CHARM_NAME_16"] = @"Тень Пустоты",
+
+                ["CHARM_NAME_18"] = @"Длинный рывок",
+
+                ["CHARM_NAME_32"] = @"Быстрый рывок",
+
+                ["CHARM_NAME_35"] = @"Элегия Гуселька",
+
+                ["INV_DESC_DASH"] =
+                    @"Плащ с мотыльковой прострочкой. Позволяет носителю делать рывок в любую сторону.",
+
+                ["INV_DESC_SHADOWDASH"] =
+                    @"Плащ, сделанный из субстанции Бездны, прародителя Черного Мотылька. Позволяет носителю получать ДУШУ и наносить двойной урон при рывке.",
+
+                ["INV_DESC_SUPERDASH"] = PlayerData.instance.GetBool("defeatedNightmareGrimm")
+                    ? @"Силовое ядро старого шахтерского голема, в которое вделан крепкий кристалл. Сила кристалла позволяет носящему нестись вперед с умопомрачительной скоростью.
+
+После уничтожения Кошмара кристалл раскрыл свой полный потенциал и дает носителю больше ловкости."
+                    : @"Силовое ядро старого шахтерского голема, в которое вделан крепкий кристалл. Сила кристалла позволяет носящему нестись вперед с умопомрачительной скоростью.
+
+Несмотря на то, что кристалл довольно силен, Кошмар до сих пор не дает раскрыть его полный потенциал.",
+
+                ["INV_NAME_SHADOWDASH"] = @"Мантия Черного Мотылька"
+            };
+            Dictionary<string, string> ptbrPromptDictionary = new Dictionary<string, string>
+            {
+                ["NAILSMITH_UPGRADE_1"] = "Pagar Geo para fortalecer a esquiva?",
+
+                ["NAILSMITH_UPGRADE_2"] = "Dar Minério Pálido e Geo para fortalecer a esquiva?",
+
+                ["NAILSMITH_UPGRADE_3"] = "Dar doi Minérios Pálido e Geo para fortalecer a esquiva?",
+
+                ["NAILSMITH_UPGRADE_4"] = "Dar trê Minérios Pálido e Geo para fortalecer a esquiva?",
+
+                ["GET_SHADOWDASH_2"] = "Use o manto para atravessar as costuras na realidade e pegar ALMA do espaço intermediário.",
+
+                ["GET_SHADOWDASH_1"] = "para se esquivar enquanto coleta ALMA do ambiente.",
+
+                ["GET_DASH_2"] = "Use o manto para esquivar-se rapidamente através do ar em todas as direções.",
+
+                ["GET_DASH_1"] = "e qualquer direção para esquivar-se naquela direção."
+            };
+            Dictionary<string, string> enPromptDictionary = new Dictionary<string, string>
+            {
+                ["NAILSMITH_UPGRADE_1"] = "Pay Geo to strengthen dash?",
+
+                ["NAILSMITH_UPGRADE_2"] = "Give Pale Ore and Geo to strengthen dash?",
+
+                ["NAILSMITH_UPGRADE_3"] = "Give two Pale Ore and Geo to strengthen dash?",
+
+                ["NAILSMITH_UPGRADE_4"] = "Give three Pale Ore and Geo to strengthen dash?",
+
+                ["GET_SHADOWDASH_2"] = "Use the cloak to dash through the seams in reality and gather SOUL from the space in-between.",
+
+                ["GET_SHADOWDASH_1"] = "to dash while gathering SOUL from the environment.",
+
+                ["GET_DASH_2"] = "Use the cloak to dash quickly through the air in all directions.",
+
+                ["GET_DASH_1"] = "while holding any direction to dash in that direction."
+            };
+            Dictionary<string, string> rusPromptDictionary = new Dictionary<string, string>
+            {
+                ["NAILSMITH_UPGRADE_1"] = "Заплатить Гео, чтобы усилить рывок?",
+
+                ["NAILSMITH_UPGRADE_2"] = "Отдать одну Бледную руду и Гео для усиления рывка?",
+
+                ["NAILSMITH_UPGRADE_3"] = "Отдать две Бледные руды и Гео для усиления рывка?",
+
+                ["NAILSMITH_UPGRADE_4"] = "Отдать три Бледные руды и Гео для усиления рывка?",
+
+                ["GET_SHADOWDASH_2"] = "Используйте плащ, чтобы проходить через щели в реальности и получать ДУШУ с пространства внутри.",
+
+                ["GET_SHADOWDASH_1"] = "для рывка, пока получаете ДУШУ от окружения.",
+
+                ["GET_DASH_2"] = "Используйте плащ, чтобы делать рывок в любом направлении.",
+
+                ["GET_DASH_1"] = "пока держите кнопку любого направления для рывка в этом направлении."
+            };
+            _flavorDictionary.Add(new KeyValuePair<int, string>(147, "UI"), ptbrUIDictionary);
+            _flavorDictionary.Add(new KeyValuePair<int, string>(44, "UI"), enUIDictionary);
+            _flavorDictionary.Add(new KeyValuePair<int, string>(154, "UI"), rusUIDictionary);
+            _flavorDictionary.Add(new KeyValuePair<int, string>(147, "Prompts"), ptbrPromptDictionary);
+            _flavorDictionary.Add(new KeyValuePair<int, string>(44, "Prompts"), enPromptDictionary);
+            _flavorDictionary.Add(new KeyValuePair<int, string>(154, "Prompts"), rusPromptDictionary);
+            LogDebug("Finished initializing dictionaries.");
+        }
+        
+        string Descriptions(string key, string sheet)
+        {
+            string ret = Language.Language.GetInternal(key, sheet);
+            int lang = (int)Language.Language.CurrentLanguage();
+            KeyValuePair<int, string> langSheet = new KeyValuePair<int, string>(lang, sheet);
+            if (!_flavorDictionary.ContainsKey(langSheet)) return ret;
+            return _flavorDictionary[langSheet].ContainsKey(key) ? _flavorDictionary[langSheet][key] : ret;
+        }
 
         #endregion
     }
